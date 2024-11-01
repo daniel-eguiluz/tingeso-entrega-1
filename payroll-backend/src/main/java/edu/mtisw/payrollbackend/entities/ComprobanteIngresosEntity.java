@@ -24,9 +24,6 @@ public class ComprobanteIngresosEntity implements Serializable {
     @Column(name = "antiguedad_laboral")
     private int antiguedadLaboral; // años en el empleo actual
 
-    @Column(name = "gastos_ultimos_24_meses")
-    private String gastosUltimos24Meses; // gastos mensuales últimos 12 meses
-
     @Column(name = "ingreso_mensual")
     private int ingresoMensual;
 

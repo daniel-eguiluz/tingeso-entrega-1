@@ -25,7 +25,7 @@ public class UsuarioComprobanteIngresosController {
 
     // Obtener un usuario comprobante de ingresos por id
     @GetMapping("/{id}")
-    public ResponseEntity<UsuarioComprobanteIngresosEntity> getUsuarioComprobanteIngresosById(@PathVariable Integer id){
+    public ResponseEntity<UsuarioComprobanteIngresosEntity> getUsuarioComprobanteIngresosById(@PathVariable Long id){
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosService.getUsuarioComprobanteIngresosById(id);
         return ResponseEntity.ok(usuarioComprobanteIngresos);
     }
@@ -46,7 +46,7 @@ public class UsuarioComprobanteIngresosController {
 
     // Eliminar un usuario comprobante de ingresos
     @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> deleteUsuarioComprobanteIngresos(@PathVariable Integer id){
+    public ResponseEntity<Boolean> deleteUsuarioComprobanteIngresos(@PathVariable Long id){
         try {
             boolean isDeleted = usuarioComprobanteIngresosService.deleteUsuarioComprobanteIngresos(id);
             return ResponseEntity.ok(isDeleted);

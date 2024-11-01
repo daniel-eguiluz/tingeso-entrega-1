@@ -24,7 +24,7 @@ public class UsuarioPrestamoController {
 
     // Obtener usuario prestamo
     @GetMapping("/{id}")
-    public ResponseEntity<UsuarioPrestamoEntity> getUsuarioById(@PathVariable Integer id){
+    public ResponseEntity<UsuarioPrestamoEntity> getUsuarioById(@PathVariable Long id){
         UsuarioPrestamoEntity usuario = usuarioPrestamoService.getUsuarioPrestamoById(id);
         return ResponseEntity.ok(usuario);
     }
@@ -45,7 +45,7 @@ public class UsuarioPrestamoController {
 
     // Eliminar usuario prestamo
     @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> deleteUsuarioById(@PathVariable Integer id) throws Exception {
+    public ResponseEntity<Boolean> deleteUsuarioById(@PathVariable Long id) throws Exception {
         var isDeleted = usuarioPrestamoService.deleteUsuarioPrestamo(id);
         return ResponseEntity.noContent().build();
     }

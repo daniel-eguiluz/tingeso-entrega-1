@@ -25,7 +25,7 @@ public class ComprobanteIngresosService {
     }
 
     // Obtener un comprobante de ingresos por id
-    public ComprobanteIngresosEntity getComprobanteIngresosById(Integer id){
+    public ComprobanteIngresosEntity getComprobanteIngresosById(Long id){
         return comprobanteIngresosRepository.findById(id).get();
     }
 
@@ -40,7 +40,7 @@ public class ComprobanteIngresosService {
     }
 
     // Eliminar un comprobante de ingresos
-    public boolean deleteComprobanteIngresos(Integer id) throws Exception {
+    public boolean deleteComprobanteIngresos(Long id) throws Exception {
         try{
             comprobanteIngresosRepository.deleteById(id);
             return true;

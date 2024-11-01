@@ -24,7 +24,7 @@ public class PrestamoService {
     }
 
     // Obtener un prestamo por id
-    public PrestamoEntity getPrestamoById(Integer id){
+    public PrestamoEntity getPrestamoById(Long id){
         return prestamoRepository.findById(id).get();
     }
 
@@ -39,7 +39,7 @@ public class PrestamoService {
     }
 
     // Eliminar un prestamo
-    public boolean deletePrestamo(Integer id) throws Exception {
+    public boolean deletePrestamo(Long id) throws Exception {
         try{
             prestamoRepository.deleteById(id);
             return true;

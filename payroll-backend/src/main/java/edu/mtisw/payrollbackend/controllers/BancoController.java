@@ -1,14 +1,11 @@
 package edu.mtisw.payrollbackend.controllers;
 
-import edu.mtisw.payrollbackend.entities.BancoEntity;
-import edu.mtisw.payrollbackend.entities.UsuarioEntity;
 import edu.mtisw.payrollbackend.services.BancoService;
 import edu.mtisw.payrollbackend.services.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController

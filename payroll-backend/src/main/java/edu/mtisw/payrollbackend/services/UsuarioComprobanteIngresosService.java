@@ -24,7 +24,7 @@ public class UsuarioComprobanteIngresosService {
     }
 
     // Obtener un usuario comprobante de ingresos por id
-    public UsuarioComprobanteIngresosEntity getUsuarioComprobanteIngresosById(Integer id){
+    public UsuarioComprobanteIngresosEntity getUsuarioComprobanteIngresosById(Long id){
         return usuarioComprobanteIngresosRepository.findById(id).get();
     }
 
@@ -39,7 +39,7 @@ public class UsuarioComprobanteIngresosService {
     }
 
     // Eliminar un usuario comprobante de ingresos
-    public boolean deleteUsuarioComprobanteIngresos(Integer id) throws Exception {
+    public boolean deleteUsuarioComprobanteIngresos(Long id) throws Exception {
         try{
             usuarioComprobanteIngresosRepository.deleteById(id);
             return true;

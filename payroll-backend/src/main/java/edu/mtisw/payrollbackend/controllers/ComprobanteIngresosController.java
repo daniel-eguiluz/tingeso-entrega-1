@@ -26,7 +26,7 @@ public class ComprobanteIngresosController {
 
     // Obtener comprobante de ingreso
     @GetMapping("/{id}")
-    public ResponseEntity<ComprobanteIngresosEntity> getComprobanteIngresosById(@PathVariable Integer id){
+    public ResponseEntity<ComprobanteIngresosEntity> getComprobanteIngresosById(@PathVariable Long id){
         ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosService.getComprobanteIngresosById(id);
         return ResponseEntity.ok(comprobanteIngresos);
     }
@@ -47,7 +47,7 @@ public class ComprobanteIngresosController {
 
     // Eliminar comprobante de ingreso
     @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> deleteComprobanteIngresosById(@PathVariable Integer id) throws Exception {
+    public ResponseEntity<Boolean> deleteComprobanteIngresosById(@PathVariable Long id) throws Exception {
         var isDeleted = comprobanteIngresosService.deleteComprobanteIngresos(id);
         return ResponseEntity.noContent().build();
     }

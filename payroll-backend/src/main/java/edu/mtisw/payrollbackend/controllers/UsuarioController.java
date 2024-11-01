@@ -28,7 +28,7 @@ public class UsuarioController {
 
     // Obtener usuario
     @GetMapping("/{id}")
-    public ResponseEntity<UsuarioEntity> getUsuarioById(@PathVariable Integer id){
+    public ResponseEntity<UsuarioEntity> getUsuarioById(@PathVariable Long id){
         UsuarioEntity usuario = usuarioService.getUsuarioById(id);
         return ResponseEntity.ok(usuario);
     }
@@ -49,7 +49,7 @@ public class UsuarioController {
 
     // Eliminar usuario
     @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> deleteUsuarioById(@PathVariable Integer id) throws Exception {
+    public ResponseEntity<Boolean> deleteUsuarioById(@PathVariable Long id) throws Exception {
         var isDeleted = usuarioService.deleteUsuario(id);
         return ResponseEntity.noContent().build();
     }
@@ -84,16 +84,13 @@ public class UsuarioController {
             int plazo = ((Number) requestBody.get("plazo")).intValue();
             double tasaInteres = ((Number) requestBody.get("tasaInteres")).doubleValue();
             int monto = ((Number) requestBody.get("monto")).intValue();
+            int valorPropiedad = ((Number) requestBody.get("valorPropiedad")).intValue(); // Nuevo código
+
             int antiguedadLaboral = ((Number) requestBody.get("antiguedadLaboral")).intValue();
             int ingresoMensual = ((Number) requestBody.get("ingresoMensual")).intValue();
             int saldo = ((Number) requestBody.get("saldo")).intValue();
 
-            // Manejo de listas
-            List<Number> gastosNumbers = (List<Number>) requestBody.get("gastosUltimos24Meses");
-            List<Integer> gastosUltimos24Meses = gastosNumbers.stream()
-                    .map(Number::intValue)
-                    .collect(Collectors.toList());
-
+            // Manejo de listas (solo ingresos)
             List<Number> ingresosNumbers = (List<Number>) requestBody.get("ingresosUltimos24Meses");
             List<Integer> ingresosUltimos24Meses = ingresosNumbers.stream()
                     .map(Number::intValue)
@@ -106,18 +103,14 @@ public class UsuarioController {
             prestamo.setTasaInteres(tasaInteres);
             prestamo.setMonto(monto);
             prestamo.setEstado("En proceso");
+            prestamo.setValorPropiedad(valorPropiedad); // Nuevo código
 
             ComprobanteIngresosEntity comprobanteIngresos = new ComprobanteIngresosEntity();
             comprobanteIngresos.setAntiguedadLaboral(antiguedadLaboral);
             comprobanteIngresos.setIngresoMensual(ingresoMensual);
             comprobanteIngresos.setSaldo(saldo);
 
-            // Convertir listas a cadenas
-            String gastosString = gastosUltimos24Meses.stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(","));
-            comprobanteIngresos.setGastosUltimos24Meses(gastosString);
-
+            // Convertir lista de ingresos a cadena y asignar
             String ingresosString = ingresosUltimos24Meses.stream()
                     .map(String::valueOf)
                     .collect(Collectors.joining(","));
@@ -127,7 +120,6 @@ public class UsuarioController {
             PrestamoEntity prestamoSolicitado = usuarioService.solicitarCredito(id, prestamo, comprobanteIngresos);
 
             return ResponseEntity.ok(prestamoSolicitado);
-            //analizar si se retorna el prestamo o todos los datos ingresados
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(null);

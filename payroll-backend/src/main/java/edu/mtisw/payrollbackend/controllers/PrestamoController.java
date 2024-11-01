@@ -27,7 +27,7 @@ public class PrestamoController {
 
     // Obtener prestamo
     @GetMapping("/{id}")
-    public ResponseEntity<PrestamoEntity> getPrestamoById(@PathVariable Integer id){
+    public ResponseEntity<PrestamoEntity> getPrestamoById(@PathVariable Long id){
         PrestamoEntity prestamo = prestamoService.getPrestamoById(id);
         return ResponseEntity.ok(prestamo);
     }
@@ -48,7 +48,7 @@ public class PrestamoController {
 
     // Eliminar prestamo
     @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> deletePrestamoById(@PathVariable Integer id) throws Exception {
+    public ResponseEntity<Boolean> deletePrestamoById(@PathVariable Long id) throws Exception {
         var isDeleted = prestamoService.deletePrestamo(id);
         return ResponseEntity.noContent().build();
     }

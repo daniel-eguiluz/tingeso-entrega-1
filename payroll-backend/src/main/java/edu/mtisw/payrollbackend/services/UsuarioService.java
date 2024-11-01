@@ -33,7 +33,7 @@ public class UsuarioService {
         return (ArrayList<UsuarioEntity>) usuarioRepository.findAll();
     }
     // Obtener un usuario por id
-    public UsuarioEntity getUsuarioById(Integer id){
+    public UsuarioEntity getUsuarioById(Long id){
         return usuarioRepository.findById(id).get();
     }
     // Guardar un usuario
@@ -45,7 +45,7 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
     // Eliminar un usuario
-    public boolean deleteUsuario(Integer id) throws Exception {
+    public boolean deleteUsuario(Long id) throws Exception {
         try{
             usuarioRepository.deleteById(id);
             return true;
@@ -57,11 +57,11 @@ public class UsuarioService {
     //simularCredito()(P1)
     public Map<String, Object> simularCredito(Long idUsuario, Long idPrestamo) throws Exception {
         // Buscar el usuario por ID
-        UsuarioEntity usuario = usuarioRepository.findById(Math.toIntExact(idUsuario))
+        UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new Exception("Usuario no encontrado"));
 
         // Buscar el prestamo por ID
-        PrestamoEntity prestamo = prestamoRepository.findById(Math.toIntExact(idPrestamo))
+        PrestamoEntity prestamo = prestamoRepository.findById(idPrestamo)
                 .orElseThrow(() -> new Exception("Préstamo no encontrado"));
 
         // Datos del préstamo para la simulación
@@ -104,7 +104,7 @@ public class UsuarioService {
     // y sus id en la tabla intermedia usuario_prestamo
     public PrestamoEntity solicitarCredito(Long idUsuario, PrestamoEntity prestamo, ComprobanteIngresosEntity comprobanteIngresos) throws Exception {
         // Obtener el usuario por ID
-        UsuarioEntity usuario = usuarioRepository.findById(Math.toIntExact(idUsuario)).orElseThrow(() -> new Exception("Usuario no encontrado"));
+        UsuarioEntity usuario = usuarioRepository.findById(idUsuario).orElseThrow(() -> new Exception("Usuario no encontrado"));
 
         // Guardar el comprobante de ingresos
         ComprobanteIngresosEntity comprobanteIngresosGuardado = comprobanteIngresosRepository.save(comprobanteIngresos);
@@ -135,7 +135,7 @@ public class UsuarioService {
     // Método para obtener los estados de los préstamos de un usuario
     public List<PrestamoEntity> obtenerEstadoSolicitudes(Long idUsuario) throws Exception {
         // Verificar si el usuario existe
-        UsuarioEntity usuario = usuarioRepository.findById(Math.toIntExact(idUsuario))
+        UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new Exception("Usuario no encontrado"));
 
         // Buscar todas las relaciones usuario-prestamo
@@ -144,7 +144,7 @@ public class UsuarioService {
         // Extraer todos los préstamos asociados
         List<PrestamoEntity> prestamos = new ArrayList<>();
         for (UsuarioPrestamoEntity usuarioPrestamo : usuarioPrestamos) {
-            PrestamoEntity prestamo = prestamoRepository.findById(Math.toIntExact(usuarioPrestamo.getIdPrestamo()))
+            PrestamoEntity prestamo = prestamoRepository.findById(usuarioPrestamo.getIdPrestamo())
                     .orElseThrow(() -> new Exception("Préstamo no encontrado"));
             prestamos.add(prestamo);
         }

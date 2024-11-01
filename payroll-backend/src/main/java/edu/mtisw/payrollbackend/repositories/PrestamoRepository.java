@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface PrestamoRepository extends JpaRepository<PrestamoEntity, Integer> {
+public interface PrestamoRepository extends JpaRepository<PrestamoEntity, Long> {
 }

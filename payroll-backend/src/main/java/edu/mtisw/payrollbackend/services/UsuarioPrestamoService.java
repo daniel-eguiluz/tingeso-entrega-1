@@ -23,7 +23,7 @@ public class UsuarioPrestamoService {
     }
 
     // Obtener un usuario-prestamo por id
-    public UsuarioPrestamoEntity getUsuarioPrestamoById(Integer id){
+    public UsuarioPrestamoEntity getUsuarioPrestamoById(Long id){
         return usuarioPrestamoRepository.findById(id).get();
     }
 
@@ -38,7 +38,7 @@ public class UsuarioPrestamoService {
     }
 
     // Eliminar un usuario-prestamo
-    public boolean deleteUsuarioPrestamo(Integer id) throws Exception {
+    public boolean deleteUsuarioPrestamo(Long id) throws Exception {
         try{
             usuarioPrestamoRepository.deleteById(id);
             return true;

@@ -33,51 +33,36 @@ public class BancoService {
     //------------------------------------PRINCIPALES---------------------------------------
     //evaluarRelacionCuotaIngreso()(R1)
     public boolean evaluarRelacionCuotaIngreso(Long idUsuario, Long idPrestamo) throws Exception {
-        // Obtener el usuario por ID
-        UsuarioEntity usuario = usuarioRepository.findById(Math.toIntExact(idUsuario))
-                .orElseThrow(() -> new Exception("Usuario no encontrado"));
+        System.out.println("Evaluando relación cuota ingreso para usuario: " + idUsuario + " y préstamo: " + idPrestamo);
 
-        // Obtener el comprobante de ingresos asociado al usuario
+        UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new Exception("Usuario no encontrado"));
+        System.out.println("Usuario encontrado: " + usuario);
+
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
+        System.out.println("Comprobante de ingresos encontrado: " + usuarioComprobanteIngresos);
 
-        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(Math.toIntExact(usuarioComprobanteIngresos.getIdComprobanteIngresos()))
+        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
+        System.out.println("Ingreso mensual: " + comprobanteIngresos.getIngresoMensual());
 
-        // Obtener el ingreso mensual del usuario
-        int ingresoMensual = comprobanteIngresos.getIngresoMensual();
-
-        // Obtener el préstamo por ID
-        PrestamoEntity prestamo = prestamoRepository.findById(Math.toIntExact(idPrestamo))
+        PrestamoEntity prestamo = prestamoRepository.findById(idPrestamo)
                 .orElseThrow(() -> new Exception("Préstamo no encontrado"));
+        System.out.println("Préstamo encontrado: " + prestamo);
 
-        // Calcular la cuota mensual del préstamo
-        double tasaInteresAnual = prestamo.getTasaInteres();
-        int plazoEnAnios = prestamo.getPlazo();
-        int monto = prestamo.getMonto();
-
-        // Calcular la tasa de interés mensual
-        double tasaInteresMensual = (tasaInteresAnual / 12) / 100;
-
-        // Número de pagos (meses)
-        int numeroPagos = plazoEnAnios * 12;
-
-        // Cálculo del pago mensual usando la fórmula de amortización
-        double pagoMensual = (monto * tasaInteresMensual * Math.pow(1 + tasaInteresMensual, numeroPagos)) /
+        // Calculo de la relación cuota ingreso
+        double tasaInteresMensual = (prestamo.getTasaInteres() / 12) / 100;
+        int numeroPagos = prestamo.getPlazo() * 12;
+        double pagoMensual = (prestamo.getMonto() * tasaInteresMensual * Math.pow(1 + tasaInteresMensual, numeroPagos)) /
                 (Math.pow(1 + tasaInteresMensual, numeroPagos) - 1);
 
-        // Calcular la relación cuota/ingreso en porcentaje
-        double relacionCuotaIngreso = (pagoMensual / ingresoMensual) * 100;
+        double relacionCuotaIngreso = (pagoMensual / comprobanteIngresos.getIngresoMensual()) * 100;
+        System.out.println("Relación cuota ingreso: " + relacionCuotaIngreso);
 
-        // Verificar si la relación es mayor que el 35%
-        if (relacionCuotaIngreso > 35) {
-            // La solicitud debe ser rechazada
-            return false;
-        } else {
-            // La solicitud puede continuar
-            return true;
-        }
+        return relacionCuotaIngreso <= 35;
     }
+
 
     //evaluarDeudas()(R2)
     public boolean evaluarHistorialCrediticio(Long idUsuario) throws Exception {
@@ -85,7 +70,7 @@ public class BancoService {
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
 
-        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(Math.toIntExact(usuarioComprobanteIngresos.getIdComprobanteIngresos()))
+        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
         int cantidadDeudasPendientes = comprobanteIngresos.getCantidadDeudasPendientes(); // Número de deudas pendientes
@@ -114,14 +99,14 @@ public class BancoService {
     // Evaluar Antigüedad Laboral y Estabilidad (R3)
     public boolean evaluarAntiguedad(Long idUsuario) throws Exception {
         // Obtener el usuario por ID
-        UsuarioEntity usuario = usuarioRepository.findById(Math.toIntExact(idUsuario))
+        UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new Exception("Usuario no encontrado"));
 
         // Obtener el comprobante de ingresos asociado al usuario
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
 
-        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(Math.toIntExact(usuarioComprobanteIngresos.getIdComprobanteIngresos()))
+        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
         if (usuario.getTipoEmpleado().equalsIgnoreCase("Empleado")) {
@@ -153,14 +138,14 @@ public class BancoService {
     //evaluarRelacionDeudaIngreso()(R4)
     public boolean evaluarRelacionDeudaIngreso(Long idUsuario, Long idPrestamo) throws Exception {
         // Obtener el usuario por ID
-        UsuarioEntity usuario = usuarioRepository.findById(Math.toIntExact(idUsuario))
+        UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new Exception("Usuario no encontrado"));
 
         // Obtener el comprobante de ingresos asociado al usuario
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
 
-        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(Math.toIntExact(usuarioComprobanteIngresos.getIdComprobanteIngresos()))
+        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
         // Obtener el ingreso mensual del usuario
@@ -170,7 +155,7 @@ public class BancoService {
         int deudasActuales = comprobanteIngresos.getDeudas();
 
         // Obtener el préstamo por ID
-        PrestamoEntity prestamo = prestamoRepository.findById(Math.toIntExact(idPrestamo))
+        PrestamoEntity prestamo = prestamoRepository.findById(idPrestamo)
                 .orElseThrow(() -> new Exception("Préstamo no encontrado"));
 
         // Calcular la cuota mensual del nuevo préstamo
@@ -207,7 +192,7 @@ public class BancoService {
     //evaluarMontoMaximoFinanciamiento()(R5)
     public boolean evaluarMontoMaximoFinanciamiento(Long idPrestamo) throws Exception {
         // Obtener el préstamo por ID
-        PrestamoEntity prestamo = prestamoRepository.findById(Math.toIntExact(idPrestamo))
+        PrestamoEntity prestamo = prestamoRepository.findById(idPrestamo)
                 .orElseThrow(() -> new Exception("Préstamo no encontrado"));
 
         String tipoPrestamo = prestamo.getTipo();
@@ -251,11 +236,11 @@ public class BancoService {
     // Evaluar Edad del Solicitante (R6)
     public boolean evaluarEdad(Long idUsuario, Long idPrestamo) throws Exception {
         // Obtener el usuario por ID
-        UsuarioEntity usuario = usuarioRepository.findById(Math.toIntExact(idUsuario))
+        UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new Exception("Usuario no encontrado"));
 
         // Obtener el préstamo por ID
-        PrestamoEntity prestamo = prestamoRepository.findById(Math.toIntExact(idPrestamo))
+        PrestamoEntity prestamo = prestamoRepository.findById(idPrestamo)
                 .orElseThrow(() -> new Exception("Préstamo no encontrado"));
 
         int edadActual = usuario.getEdad();
@@ -280,14 +265,14 @@ public class BancoService {
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
 
-        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(Math.toIntExact(usuarioComprobanteIngresos.getIdComprobanteIngresos()))
+        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
         // Obtener el saldo del cliente
         int saldoCliente = comprobanteIngresos.getSaldo();
 
         // Obtener el préstamo por ID
-        PrestamoEntity prestamo = prestamoRepository.findById(Math.toIntExact(idPrestamo))
+        PrestamoEntity prestamo = prestamoRepository.findById(idPrestamo)
                 .orElseThrow(() -> new Exception("Préstamo no encontrado"));
 
         // Obtener el monto del préstamo solicitado
@@ -312,7 +297,7 @@ public class BancoService {
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
 
-        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(Math.toIntExact(usuarioComprobanteIngresos.getIdComprobanteIngresos()))
+        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
         // Obtener los saldos mensuales
@@ -360,7 +345,7 @@ public class BancoService {
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
 
-        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(Math.toIntExact(usuarioComprobanteIngresos.getIdComprobanteIngresos()))
+        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
         // Obtener los depósitos de los últimos 12 meses
@@ -424,7 +409,7 @@ public class BancoService {
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
 
-        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(Math.toIntExact(usuarioComprobanteIngresos.getIdComprobanteIngresos()))
+        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
         // Obtener la antigüedad de la cuenta y el saldo acumulado
@@ -432,7 +417,7 @@ public class BancoService {
         int saldoAcumulado = comprobanteIngresos.getSaldo();
 
         // Obtener el préstamo por ID
-        PrestamoEntity prestamo = prestamoRepository.findById(Math.toIntExact(idPrestamo))
+        PrestamoEntity prestamo = prestamoRepository.findById(idPrestamo)
                 .orElseThrow(() -> new Exception("Préstamo no encontrado"));
 
         // Obtener el monto del préstamo solicitado
@@ -460,7 +445,7 @@ public class BancoService {
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
 
-        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(Math.toIntExact(usuarioComprobanteIngresos.getIdComprobanteIngresos()))
+        ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
         // Obtener los retiros de los últimos 6 meses y limpiar la cadena
@@ -627,7 +612,7 @@ public class BancoService {
         Map<String, Object> resultado = new HashMap<>();
 
         // Obtener el préstamo por ID
-        PrestamoEntity prestamo = prestamoRepository.findById(Math.toIntExact(idPrestamo))
+        PrestamoEntity prestamo = prestamoRepository.findById(idPrestamo)
                 .orElseThrow(() -> new Exception("Préstamo no encontrado"));
 
         double montoPrestamo = prestamo.getMonto();
