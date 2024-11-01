@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "usuarioComprobanteIngresos")
+@Table(name = "usuario_comprobante_ingresos")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,9 +18,9 @@ public class UsuarioComprobanteIngresosEntity {
     @Column(unique = true, nullable = false, name = "id")
     private Long id;
 
-    @Column(name = "idUsuario")
+    @Column(name = "id_usuario")
     private Long idUsuario;
 
-    @Column(name = "idComprobanteIngresos")
+    @Column(name = "id_comprobante_ingresos")
     private Long idComprobanteIngresos;
 }

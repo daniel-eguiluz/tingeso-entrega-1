@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "usuarioPrestamo")
+@Table(name = "usuario_prestamo")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,9 +18,9 @@ public class UsuarioPrestamoEntity {
     @Column(unique = true, nullable = false, name = "id")
     private Long id;
 
-    @Column(name = "idUsuario")
+    @Column(name = "id_usuario")
     private Long idUsuario;
 
-    @Column(name = "idPrestamo")
+    @Column(name = "id_prestamo")
     private Long idPrestamo;
 }

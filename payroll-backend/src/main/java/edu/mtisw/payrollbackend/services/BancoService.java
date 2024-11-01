@@ -2,18 +2,10 @@ package edu.mtisw.payrollbackend.services;
 
 import edu.mtisw.payrollbackend.entities.*;
 import edu.mtisw.payrollbackend.repositories.*;
-import edu.mtisw.payrollbackend.services.*;
 import jakarta.persistence.Id;
-import org.hibernate.type.TrueFalseConverter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class BancoService {
@@ -29,11 +21,13 @@ public class BancoService {
     UsuarioComprobanteIngresosRepository usuarioComprobanteIngresosRepository;
     @Autowired
     UsuarioService usuarioService;
-    //------------------------------------CRUD----------------------------------------------
-    //------------------------------------PRINCIPALES---------------------------------------
-    //evaluarRelacionCuotaIngreso()(R1)
-    public boolean evaluarRelacionCuotaIngreso(Long idUsuario, Long idPrestamo) throws Exception {
-        System.out.println("Evaluando relación cuota ingreso para usuario: " + idUsuario + " y préstamo: " + idPrestamo);
+
+    // ------------------------------------CRUD----------------------------------------------
+    // ------------------------------------PRINCIPALES---------------------------------------
+
+    // Evaluar Relación Cuota/Ingreso (R1)
+    public boolean evaluarRelacionCuotaIngreso(Long idUsuario) throws Exception {
+        System.out.println("Evaluando relación cuota ingreso para usuario: " + idUsuario);
 
         UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new Exception("Usuario no encontrado"));
@@ -47,34 +41,34 @@ public class BancoService {
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
         System.out.println("Ingreso mensual: " + comprobanteIngresos.getIngresoMensual());
 
-        PrestamoEntity prestamo = prestamoRepository.findById(idPrestamo)
+        UsuarioPrestamoEntity usuarioPrestamo = usuarioPrestamoRepository.findByIdUsuario(idUsuario)
+                .orElseThrow(() -> new Exception("Préstamo no asociado al usuario"));
+
+        PrestamoEntity prestamo = prestamoRepository.findById(usuarioPrestamo.getIdPrestamo())
                 .orElseThrow(() -> new Exception("Préstamo no encontrado"));
         System.out.println("Préstamo encontrado: " + prestamo);
 
-        // Calculo de la relación cuota ingreso
+        // Cálculo de la relación cuota ingreso
         double tasaInteresMensual = (prestamo.getTasaInteres() / 12) / 100;
         int numeroPagos = prestamo.getPlazo() * 12;
         double pagoMensual = (prestamo.getMonto() * tasaInteresMensual * Math.pow(1 + tasaInteresMensual, numeroPagos)) /
                 (Math.pow(1 + tasaInteresMensual, numeroPagos) - 1);
-
         double relacionCuotaIngreso = (pagoMensual / comprobanteIngresos.getIngresoMensual()) * 100;
         System.out.println("Relación cuota ingreso: " + relacionCuotaIngreso);
 
         return relacionCuotaIngreso <= 35;
     }
 
-
-    //evaluarDeudas()(R2)
+    // Evaluar Historial Crediticio del Cliente (R2)
     public boolean evaluarHistorialCrediticio(Long idUsuario) throws Exception {
         // Obtener el comprobante de ingresos asociado al usuario
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
-
         ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
         int cantidadDeudasPendientes = comprobanteIngresos.getCantidadDeudasPendientes(); // Número de deudas pendientes
-        int montoTotalDeudasPendientes = comprobanteIngresos.getDeudas(); // Usamos el atributo 'deudas' existente
+        int montoTotalDeudasPendientes = comprobanteIngresos.getDeudas(); // Monto total de deudas pendientes
 
         // Obtener el ingreso mensual del cliente
         int ingresoMensual = comprobanteIngresos.getIngresoMensual();
@@ -90,12 +84,10 @@ public class BancoService {
             // Si tiene demasiadas deudas pendientes o las deudas superan el 30% de los ingresos, se rechaza la solicitud
             return false;
         }
-
         // Si las deudas pendientes están dentro de un rango aceptable, se acepta
         return true;
     }
 
-    //evaluarAntiguedad()(R3)
     // Evaluar Antigüedad Laboral y Estabilidad (R3)
     public boolean evaluarAntiguedad(Long idUsuario) throws Exception {
         // Obtener el usuario por ID
@@ -105,7 +97,6 @@ public class BancoService {
         // Obtener el comprobante de ingresos asociado al usuario
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
-
         ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
@@ -119,9 +110,8 @@ public class BancoService {
             }
         } else if (usuario.getTipoEmpleado().equalsIgnoreCase("Independiente")) {
             // Si es independiente, revisar ingresos de los últimos 2 años
-            String ingresosUltimos24MesesStr = comprobanteIngresos.getIngresosUltimos24Meses();
+            String ingresosUltimos24MesesStr = comprobanteIngresos.getIngresosUltimos24Meses().replace("[", "").replace("]", "");
             String[] ingresosArray = ingresosUltimos24MesesStr.split(",");
-
             if (ingresosArray.length >= 24) {
                 // Tiene registros de ingresos de los últimos 24 meses
                 // Aquí podrías evaluar la estabilidad financiera según tus criterios
@@ -135,8 +125,13 @@ public class BancoService {
         }
     }
 
-    //evaluarRelacionDeudaIngreso()(R4)
-    public boolean evaluarRelacionDeudaIngreso(Long idUsuario, Long idPrestamo) throws Exception {
+    // Evaluar Relación Deuda/Ingreso (R4)
+    public boolean evaluarRelacionDeudaIngreso(Long idUsuario) throws Exception {
+        // Obtener el préstamo asociado al usuario
+        UsuarioPrestamoEntity usuarioPrestamo = usuarioPrestamoRepository.findByIdUsuario(idUsuario)
+                .orElseThrow(() -> new Exception("Préstamo no asociado al usuario"));
+        Long idPrestamo = usuarioPrestamo.getIdPrestamo();
+
         // Obtener el usuario por ID
         UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new Exception("Usuario no encontrado"));
@@ -144,7 +139,6 @@ public class BancoService {
         // Obtener el comprobante de ingresos asociado al usuario
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
-
         ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
@@ -189,19 +183,22 @@ public class BancoService {
         }
     }
 
-    //evaluarMontoMaximoFinanciamiento()(R5)
-    public boolean evaluarMontoMaximoFinanciamiento(Long idPrestamo) throws Exception {
+    // Evaluar Monto Máximo de Financiamiento (R5)
+    public boolean evaluarMontoMaximoFinanciamiento(Long idUsuario) throws Exception {
+        // Obtener el préstamo asociado al usuario
+        UsuarioPrestamoEntity usuarioPrestamo = usuarioPrestamoRepository.findByIdUsuario(idUsuario)
+                .orElseThrow(() -> new Exception("Préstamo no asociado al usuario"));
+        Long idPrestamo = usuarioPrestamo.getIdPrestamo();
+
         // Obtener el préstamo por ID
         PrestamoEntity prestamo = prestamoRepository.findById(idPrestamo)
                 .orElseThrow(() -> new Exception("Préstamo no encontrado"));
-
         String tipoPrestamo = prestamo.getTipo();
         int valorPropiedad = prestamo.getValorPropiedad();
         int montoSolicitado = prestamo.getMonto();
 
         // Definir el porcentaje máximo según el tipo de préstamo
         double porcentajeMaximo;
-
         switch (tipoPrestamo.toLowerCase()) {
             case "primera vivienda":
                 porcentajeMaximo = 0.80; // 80%
@@ -232,9 +229,13 @@ public class BancoService {
         }
     }
 
-    //evaluarEdad()(R6)
     // Evaluar Edad del Solicitante (R6)
-    public boolean evaluarEdad(Long idUsuario, Long idPrestamo) throws Exception {
+    public boolean evaluarEdad(Long idUsuario) throws Exception {
+        // Obtener el préstamo asociado al usuario
+        UsuarioPrestamoEntity usuarioPrestamo = usuarioPrestamoRepository.findByIdUsuario(idUsuario)
+                .orElseThrow(() -> new Exception("Préstamo no asociado al usuario"));
+        Long idPrestamo = usuarioPrestamo.getIdPrestamo();
+
         // Obtener el usuario por ID
         UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new Exception("Usuario no encontrado"));
@@ -259,12 +260,16 @@ public class BancoService {
         }
     }
 
-    //evaluarSaldoMinimo()(R71)
-    public boolean evaluarSaldoMinimo(Long idUsuario, Long idPrestamo) throws Exception {
+    // Evaluar Saldo Mínimo Requerido (R71)
+    public boolean evaluarSaldoMinimo(Long idUsuario) throws Exception {
+        // Obtener el préstamo asociado al usuario
+        UsuarioPrestamoEntity usuarioPrestamo = usuarioPrestamoRepository.findByIdUsuario(idUsuario)
+                .orElseThrow(() -> new Exception("Préstamo no asociado al usuario"));
+        Long idPrestamo = usuarioPrestamo.getIdPrestamo();
+
         // Obtener el comprobante de ingresos asociado al usuario
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
-
         ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
@@ -296,24 +301,19 @@ public class BancoService {
         // Obtener el comprobante de ingresos asociado al usuario
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
-
         ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
-
         // Obtener los saldos mensuales
         String saldosMensualesStr = comprobanteIngresos.getSaldosMensuales();
         String[] saldosArray = saldosMensualesStr.split(",");
-
         if (saldosArray.length < 12) {
             throw new Exception("No hay suficientes datos de saldos mensuales");
         }
-
         // Convertir a una lista de enteros
         List<Double> saldosMensuales = new ArrayList<>();
         for (String saldoStr : saldosArray) {
             saldosMensuales.add(Double.parseDouble(saldoStr));
         }
-
         // Verificar que el saldo haya sido positivo durante los últimos 12 meses
         for (Double saldo : saldosMensuales) {
             if (saldo <= 0) {
@@ -321,37 +321,21 @@ public class BancoService {
                 return false;
             }
         }
-
-        // Verificar si hubo retiros significativos (> 50% del saldo)
-        for (int i = 1; i < saldosMensuales.size(); i++) {
-            double saldoAnterior = saldosMensuales.get(i - 1);
-            double saldoActual = saldosMensuales.get(i);
-
-            double disminucion = saldoAnterior - saldoActual;
-
-            if (disminucion > (saldoAnterior * 0.50)) {
-                // Se detectó un retiro significativo
-                return false;
-            }
-        }
-
-        // Cumple con el historial de ahorro consistente
+        // No se encontraron saldos negativos en los últimos 12 meses
         return true;
     }
 
-    //evaluarDepositosPeriodicos(R73)
+        // Evaluar Depósitos Periódicos (R73)
     public boolean evaluarDepositosPeriodicos(Long idUsuario) throws Exception {
         // Obtener el comprobante de ingresos asociado al usuario
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
-
         ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
-        // Obtener los depósitos de los últimos 12 meses
+        // Obtener los depósitos de los últimos 12 meses y limpiar la cadena
         String depositosStr = comprobanteIngresos.getDepositosUltimos12Meses().replace("[", "").replace("]", "");
         String[] depositosArray = depositosStr.split(",");
-
         if (depositosArray.length < 12) {
             throw new Exception("No hay suficientes datos de depósitos");
         }
@@ -359,7 +343,7 @@ public class BancoService {
         // Convertir a una lista de Double
         List<Double> depositosMensuales = new ArrayList<>();
         for (String depositoStr : depositosArray) {
-            depositoStr = depositoStr.trim();
+            depositoStr = depositoStr.trim(); // Eliminar espacios en blanco
             depositosMensuales.add(Double.parseDouble(depositoStr));
         }
 
@@ -388,7 +372,6 @@ public class BancoService {
             double sumaTrimestre = depositosMensuales.get(i);
             if (i + 1 < depositosMensuales.size()) sumaTrimestre += depositosMensuales.get(i + 1);
             if (i + 2 < depositosMensuales.size()) sumaTrimestre += depositosMensuales.get(i + 2);
-
             if (sumaTrimestre >= montoMinimoDeposito * 3) {
                 depositosTrimestralesCount++;
             }
@@ -403,12 +386,16 @@ public class BancoService {
         return false;
     }
 
-    //evaluarRelacionSaldoAntiguedad(R74)
-    public boolean evaluarRelacionSaldoAntiguedad(Long idUsuario, Long idPrestamo) throws Exception {
+    // Evaluar Relación Saldo/Antigüedad (R74)
+    public boolean evaluarRelacionSaldoAntiguedad(Long idUsuario) throws Exception {
+        // Obtener el préstamo asociado al usuario
+        UsuarioPrestamoEntity usuarioPrestamo = usuarioPrestamoRepository.findByIdUsuario(idUsuario)
+                .orElseThrow(() -> new Exception("Préstamo no asociado al usuario"));
+        Long idPrestamo = usuarioPrestamo.getIdPrestamo();
+
         // Obtener el comprobante de ingresos asociado al usuario
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
-
         ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
@@ -439,19 +426,17 @@ public class BancoService {
         }
     }
 
-    //evaluarRetiroReciente(R75)
+    // Evaluar Retiros Recientes (R75)
     public boolean evaluarRetirosRecientes(Long idUsuario) throws Exception {
         // Obtener el comprobante de ingresos asociado al usuario
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no asociado al usuario"));
-
         ComprobanteIngresosEntity comprobanteIngresos = comprobanteIngresosRepository.findById(usuarioComprobanteIngresos.getIdComprobanteIngresos())
                 .orElseThrow(() -> new Exception("Comprobante de ingresos no encontrado"));
 
         // Obtener los retiros de los últimos 6 meses y limpiar la cadena
         String retirosStr = comprobanteIngresos.getRetirosUltimos6Meses().replace("[", "").replace("]", "");
         String[] retirosArray = retirosStr.split(",");
-
         if (retirosArray.length < 6) {
             throw new Exception("No hay suficientes datos de retiros");
         }
@@ -459,7 +444,6 @@ public class BancoService {
         // Obtener los saldos mensuales y limpiar la cadena
         String saldosMensualesStr = comprobanteIngresos.getSaldosMensuales().replace("[", "").replace("]", "");
         String[] saldosArray = saldosMensualesStr.split(",");
-
         if (saldosArray.length < 6) {
             throw new Exception("No hay suficientes datos de saldos mensuales");
         }
@@ -467,14 +451,12 @@ public class BancoService {
         // Tomar los últimos 6 saldos y retiros
         List<Double> retirosMensuales = new ArrayList<>();
         List<Double> saldosMensuales = new ArrayList<>();
-
         for (int i = saldosArray.length - 6; i < saldosArray.length; i++) {
-            String saldoStr = saldosArray[i].trim();
+            String saldoStr = saldosArray[i].trim(); // Eliminar espacios en blanco
             saldosMensuales.add(Double.parseDouble(saldoStr));
         }
-
         for (int i = retirosArray.length - 6; i < retirosArray.length; i++) {
-            String retiroStr = retirosArray[i].trim();
+            String retiroStr = retirosArray[i].trim(); // Eliminar espacios en blanco
             retirosMensuales.add(Double.parseDouble(retiroStr));
         }
 
@@ -482,14 +464,11 @@ public class BancoService {
         for (int i = 0; i < 6; i++) {
             double saldo = saldosMensuales.get(i);
             double retiro = retirosMensuales.get(i);
-
             if (saldo == 0) {
                 // Evitar división por cero
                 continue;
             }
-
             double porcentajeRetiro = (retiro / saldo) * 100;
-
             if (porcentajeRetiro > 30) {
                 // Se ha realizado un retiro superior al 30% del saldo
                 return false;
@@ -500,14 +479,13 @@ public class BancoService {
         return true;
     }
 
-    //evaluarCapacidadAhorro()(R7)
-    public Map<String, Object> evaluarCapacidadAhorro(Long idUsuario, Long idPrestamo) throws Exception {
+    // Evaluar Capacidad de Ahorro (R7)
+    public Map<String, Object> evaluarCapacidadAhorro(Long idUsuario) throws Exception {
         Map<String, Object> resultado = new HashMap<>();
-
         int reglasCumplidas = 0;
 
         // Evaluar R71: Saldo Mínimo Requerido
-        boolean r71 = evaluarSaldoMinimo(idUsuario, idPrestamo);
+        boolean r71 = evaluarSaldoMinimo(idUsuario);
         if (r71) reglasCumplidas++;
 
         // Evaluar R72: Historial de Ahorro Consistente
@@ -519,7 +497,7 @@ public class BancoService {
         if (r73) reglasCumplidas++;
 
         // Evaluar R74: Relación Saldo/Años de Antigüedad
-        boolean r74 = evaluarRelacionSaldoAntiguedad(idUsuario, idPrestamo);
+        boolean r74 = evaluarRelacionSaldoAntiguedad(idUsuario);
         if (r74) reglasCumplidas++;
 
         // Evaluar R75: Retiros Recientes
@@ -527,7 +505,6 @@ public class BancoService {
         if (r75) reglasCumplidas++;
 
         String capacidadAhorro;
-
         if (reglasCumplidas == 5) {
             capacidadAhorro = "sólida";
         } else if (reglasCumplidas >= 3) {
@@ -545,19 +522,22 @@ public class BancoService {
                 "R74", r74,
                 "R75", r75
         ));
-
         return resultado;
     }
 
-    //evaluarCredito()(P4)
-    public Map<String, Object> evaluarCredito(Long idUsuario, Long idPrestamo) throws Exception {
+    // Evaluar Crédito (P4)
+    public Map<String, Object> evaluarCredito(Long idUsuario) throws Exception {
         Map<String, Object> resultado = new HashMap<>();
         Map<String, Boolean> reglasCumplidas = new HashMap<>();
-
         boolean aprobado = true;
 
+        // Obtener el préstamo asociado al usuario
+        UsuarioPrestamoEntity usuarioPrestamo = usuarioPrestamoRepository.findByIdUsuario(idUsuario)
+                .orElseThrow(() -> new Exception("Préstamo no asociado al usuario"));
+        Long idPrestamo = usuarioPrestamo.getIdPrestamo();
+
         // Evaluar R1: Relación Cuota/Ingreso
-        boolean r1 = evaluarRelacionCuotaIngreso(idUsuario, idPrestamo);
+        boolean r1 = evaluarRelacionCuotaIngreso(idUsuario);
         reglasCumplidas.put("R1", r1);
         if (!r1) aprobado = false;
 
@@ -572,22 +552,22 @@ public class BancoService {
         if (!r3) aprobado = false;
 
         // Evaluar R4: Relación Deuda/Ingreso
-        boolean r4 = evaluarRelacionDeudaIngreso(idUsuario, idPrestamo);
+        boolean r4 = evaluarRelacionDeudaIngreso(idUsuario);
         reglasCumplidas.put("R4", r4);
         if (!r4) aprobado = false;
 
         // Evaluar R5: Monto Máximo de Financiamiento
-        boolean r5 = evaluarMontoMaximoFinanciamiento(idPrestamo);
+        boolean r5 = evaluarMontoMaximoFinanciamiento(idUsuario);
         reglasCumplidas.put("R5", r5);
         if (!r5) aprobado = false;
 
         // Evaluar R6: Edad del Solicitante
-        boolean r6 = evaluarEdad(idUsuario, idPrestamo);
+        boolean r6 = evaluarEdad(idUsuario);
         reglasCumplidas.put("R6", r6);
         if (!r6) aprobado = false;
 
         // Evaluar R7: Capacidad de Ahorro
-        Map<String, Object> evaluacionAhorro = evaluarCapacidadAhorro(idUsuario, idPrestamo);
+        Map<String, Object> evaluacionAhorro = evaluarCapacidadAhorro(idUsuario);
         String capacidadAhorro = (String) evaluacionAhorro.get("capacidadAhorro");
         int reglasAhorroCumplidas = (int) evaluacionAhorro.get("reglasCumplidas");
 
@@ -603,16 +583,17 @@ public class BancoService {
         resultado.put("reglasCumplidas", reglasCumplidas);
         resultado.put("capacidadAhorro", capacidadAhorro);
         resultado.put("detallesAhorro", evaluacionAhorro.get("detalles"));
-
         return resultado;
     }
 
-    //calcularCostoTotales()(P6)
-    public Map<String, Object> calcularCostoTotalPrestamo(Long idPrestamo) throws Exception {
+    // Calcular Costos Totales (P6)
+    public Map<String, Object> calcularCostoTotalPrestamo(Long idUsuario) throws Exception {
         Map<String, Object> resultado = new HashMap<>();
 
-        // Obtener el préstamo por ID
-        PrestamoEntity prestamo = prestamoRepository.findById(idPrestamo)
+        // Obtener el préstamo asociado al usuario
+        UsuarioPrestamoEntity usuarioPrestamo = usuarioPrestamoRepository.findByIdUsuario(idUsuario)
+                .orElseThrow(() -> new Exception("Préstamo no asociado al usuario"));
+        PrestamoEntity prestamo = prestamoRepository.findById(usuarioPrestamo.getIdPrestamo())
                 .orElseThrow(() -> new Exception("Préstamo no encontrado"));
 
         double montoPrestamo = prestamo.getMonto();
@@ -664,7 +645,6 @@ public class BancoService {
         resultado.put("costoMensualTotal", costoMensualTotal);
         resultado.put("costoTotal", costoTotal);
         resultado.put("numeroPagos", numeroPagos);
-
         return resultado;
     }
 }

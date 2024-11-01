@@ -11,5 +11,6 @@ import java.util.Optional;
 
 @Repository
 public interface UsuarioPrestamoRepository extends JpaRepository<UsuarioPrestamoEntity, Long> {
-    List<UsuarioPrestamoEntity> findByIdUsuario(Long idUsuario);
+    Optional<UsuarioPrestamoEntity> findByIdUsuario(Long idUsuario);
 }
+

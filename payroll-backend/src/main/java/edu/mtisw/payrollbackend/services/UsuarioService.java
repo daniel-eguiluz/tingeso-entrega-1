@@ -2,18 +2,10 @@ package edu.mtisw.payrollbackend.services;
 
 import edu.mtisw.payrollbackend.entities.*;
 import edu.mtisw.payrollbackend.repositories.*;
-import edu.mtisw.payrollbackend.repositories.UsuarioRepository;
-import jakarta.persistence.Id;
-import org.hibernate.type.TrueFalseConverter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class UsuarioService {
@@ -27,6 +19,7 @@ public class UsuarioService {
     UsuarioPrestamoRepository usuarioPrestamoRepository;
     @Autowired
     UsuarioComprobanteIngresosRepository usuarioComprobanteIngresosRepository;
+
     //------------------------------------CRUD----------------------------------------------
     // Obtener todos los usuarios
     public ArrayList<UsuarioEntity> getUsuarios(){
@@ -54,14 +47,14 @@ public class UsuarioService {
         }
     }
     //------------------------------------PRINCIPALES---------------------------------------
-    //simularCredito()(P1)
-    public Map<String, Object> simularCredito(Long idUsuario, Long idPrestamo) throws Exception {
-        // Buscar el usuario por ID
-        UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new Exception("Usuario no encontrado"));
 
-        // Buscar el prestamo por ID
-        PrestamoEntity prestamo = prestamoRepository.findById(idPrestamo)
+    // Simular Crédito (P1)
+    public Map<String, Object> simularCredito(Long idUsuario) throws Exception {
+        // Obtener el préstamo asociado al usuario
+        UsuarioPrestamoEntity usuarioPrestamo = usuarioPrestamoRepository.findByIdUsuario(idUsuario)
+                .orElseThrow(() -> new Exception("Préstamo no asociado al usuario"));
+
+        PrestamoEntity prestamo = prestamoRepository.findById(usuarioPrestamo.getIdPrestamo())
                 .orElseThrow(() -> new Exception("Préstamo no encontrado"));
 
         // Datos del préstamo para la simulación
@@ -95,62 +88,68 @@ public class UsuarioService {
         return simulacionResultado;
     }
 
-    // Registrar usuario(implementado en el CRUD)
-
-    // Solicitar Credito (P3) (por implementar)
-    // Consiste en aplicar las funciones saveComprobanteIngresos de la entidad
-    // y sus id en la tabla intermedia usuario_comprobante_ingresos
-    // ComprobanteIngresos savePrestamo de la entidad Prestamo
-    // y sus id en la tabla intermedia usuario_prestamo
+    // Solicitar Crédito (P3)
     public PrestamoEntity solicitarCredito(Long idUsuario, PrestamoEntity prestamo, ComprobanteIngresosEntity comprobanteIngresos) throws Exception {
         // Obtener el usuario por ID
-        UsuarioEntity usuario = usuarioRepository.findById(idUsuario).orElseThrow(() -> new Exception("Usuario no encontrado"));
+        UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new Exception("Usuario no encontrado"));
 
-        // Guardar el comprobante de ingresos
-        ComprobanteIngresosEntity comprobanteIngresosGuardado = comprobanteIngresosRepository.save(comprobanteIngresos);
+        // Manejo del comprobante de ingresos
+        Optional<UsuarioComprobanteIngresosEntity> usuarioComprobanteIngresosOpt = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario);
 
-        // Guardar el prestamo
-        prestamo.setEstado("En proceso");  // Establecer el estado inicial como "En proceso"
-        PrestamoEntity prestamoGuardado = prestamoRepository.save(prestamo);
+        ComprobanteIngresosEntity comprobanteIngresosGuardado;
+        if (usuarioComprobanteIngresosOpt.isPresent()) {
+            // Actualizar el comprobante de ingresos existente
+            UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosOpt.get();
+            comprobanteIngresos.setId(usuarioComprobanteIngresos.getIdComprobanteIngresos());
+            comprobanteIngresosGuardado = comprobanteIngresosRepository.save(comprobanteIngresos);
+        } else {
+            // Guardar el nuevo comprobante de ingresos
+            comprobanteIngresosGuardado = comprobanteIngresosRepository.save(comprobanteIngresos);
+            // Asociar al usuario
+            UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = new UsuarioComprobanteIngresosEntity();
+            usuarioComprobanteIngresos.setIdUsuario(usuario.getId());
+            usuarioComprobanteIngresos.setIdComprobanteIngresos(comprobanteIngresosGuardado.getId());
+            usuarioComprobanteIngresosRepository.save(usuarioComprobanteIngresos);
+        }
 
-        // Crear y guardar la relación en UsuarioPrestamo
-        UsuarioPrestamoEntity usuarioPrestamo = new UsuarioPrestamoEntity();
-        usuarioPrestamo.setIdUsuario(usuario.getId());
-        usuarioPrestamo.setIdPrestamo(prestamoGuardado.getId());
-        usuarioPrestamoRepository.save(usuarioPrestamo);
+        // Manejo del préstamo
+        Optional<UsuarioPrestamoEntity> usuarioPrestamoOpt = usuarioPrestamoRepository.findByIdUsuario(idUsuario);
 
-        // También podríamos relacionar el comprobante de ingresos si es necesario.
-        UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = new UsuarioComprobanteIngresosEntity();
-        usuarioComprobanteIngresos.setIdUsuario(usuario.getId());
-        usuarioComprobanteIngresos.setIdComprobanteIngresos(comprobanteIngresosGuardado.getId());
-        // Guardar en la tabla intermedia
-        usuarioComprobanteIngresosRepository.save(usuarioComprobanteIngresos);
+        PrestamoEntity prestamoGuardado;
+        if (usuarioPrestamoOpt.isPresent()) {
+            // Actualizar el préstamo existente
+            UsuarioPrestamoEntity usuarioPrestamo = usuarioPrestamoOpt.get();
+            prestamo.setId(usuarioPrestamo.getIdPrestamo());
+            prestamoGuardado = prestamoRepository.save(prestamo);
+        } else {
+            // Guardar el nuevo préstamo
+            prestamo.setEstado("En proceso");
+            prestamoGuardado = prestamoRepository.save(prestamo);
+            // Asociar al usuario
+            UsuarioPrestamoEntity usuarioPrestamo = new UsuarioPrestamoEntity();
+            usuarioPrestamo.setIdUsuario(usuario.getId());
+            usuarioPrestamo.setIdPrestamo(prestamoGuardado.getId());
+            usuarioPrestamoRepository.save(usuarioPrestamo);
+        }
 
-        // Retornar el prestamo guardado
+        // Retornar el préstamo guardado
         return prestamoGuardado;
     }
 
-
-    // Obtener estado solicitud (P5) (por implementar)
-    // Método para obtener los estados de los préstamos de un usuario
-    public List<PrestamoEntity> obtenerEstadoSolicitudes(Long idUsuario) throws Exception {
+    // Obtener estado de la solicitud (P5)
+    public PrestamoEntity obtenerEstadoSolicitud(Long idUsuario) throws Exception {
         // Verificar si el usuario existe
         UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new Exception("Usuario no encontrado"));
 
-        // Buscar todas las relaciones usuario-prestamo
-        List<UsuarioPrestamoEntity> usuarioPrestamos = usuarioPrestamoRepository.findByIdUsuario(idUsuario);
+        // Obtener el préstamo asociado al usuario
+        UsuarioPrestamoEntity usuarioPrestamo = usuarioPrestamoRepository.findByIdUsuario(idUsuario)
+                .orElseThrow(() -> new Exception("Préstamo no asociado al usuario"));
 
-        // Extraer todos los préstamos asociados
-        List<PrestamoEntity> prestamos = new ArrayList<>();
-        for (UsuarioPrestamoEntity usuarioPrestamo : usuarioPrestamos) {
-            PrestamoEntity prestamo = prestamoRepository.findById(usuarioPrestamo.getIdPrestamo())
-                    .orElseThrow(() -> new Exception("Préstamo no encontrado"));
-            prestamos.add(prestamo);
-        }
+        PrestamoEntity prestamo = prestamoRepository.findById(usuarioPrestamo.getIdPrestamo())
+                .orElseThrow(() -> new Exception("Préstamo no encontrado"));
 
-        return prestamos;
+        return prestamo;
     }
 }
-
-
