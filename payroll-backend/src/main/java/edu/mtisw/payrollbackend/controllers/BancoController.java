@@ -49,8 +49,6 @@ public class BancoController {
         }
     }
 
-    // Resto de los métodos, ajustados para usar idUsuario
-
     // Evaluar Historial Crediticio del Cliente (R2)
     @GetMapping("/evaluar-historial-crediticio/{idUsuario}")
     public ResponseEntity<Map<String, Object>> evaluarHistorialCrediticio(

@@ -1,141 +1,305 @@
 package edu.mtisw.payrollbackend.services;
 
-import edu.mtisw.payrollbackend.entities.EmployeeEntity;
+import edu.mtisw.payrollbackend.entities.*;
+import edu.mtisw.payrollbackend.repositories.*;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class BancoServiceTest {
 
-    OfficeHRMService officeHRM = new OfficeHRMService();
-    EmployeeEntity employee = new EmployeeEntity();
+    @Spy
+    @InjectMocks
+    BancoService bancoService;
 
-    @Test
-    void whenGetAnnualSalary_thenCorrect() {
-        //Given
-        employee.setRut("12.345.678-2");
-        employee.setName("Raul");
-        employee.setChildren(2);
-        employee.setSalary(2000);
-        employee.setCategory("A");
+    @Mock
+    UsuarioRepository usuarioRepository;
 
-        //When
-        int annualSalary = officeHRM.getAnnualSalary(employee);
+    @Mock
+    ComprobanteIngresosRepository comprobanteIngresosRepository;
 
-        //Then
-        assertThat(annualSalary).isEqualTo(24000);
+    @Mock
+    PrestamoRepository prestamoRepository;
+
+    @Mock
+    UsuarioPrestamoRepository usuarioPrestamoRepository;
+
+    @Mock
+    UsuarioComprobanteIngresosRepository usuarioComprobanteIngresosRepository;
+
+    @Mock
+    UsuarioService usuarioService;
+
+    @BeforeEach
+    void setUp() {
+        // No es necesario abrir mocks manualmente con @ExtendWith
     }
 
     @Test
-    void whenSalaryLessThan2000_thenSalaryBonusIs10Percent() {
-        //Given
-        employee.setRut("13.777.678-2");
-        employee.setName("Felipe");
-        employee.setChildren(2);
-        employee.setSalary(1500);
-        employee.setCategory("A");
+    void whenEvaluarRelacionCuotaIngreso_thenReturnTrue() throws Exception {
+        // Given
+        Long idUsuario = 1L;
 
-        //When
-        int salaryBonus = officeHRM.getSalaryBonus(employee);
+        UsuarioEntity usuario = new UsuarioEntity();
+        usuario.setId(idUsuario);
+        usuario.setEdad(30);
+        usuario.setTipoEmpleado("Empleado");
 
-        //Then
-        assertThat(salaryBonus).isEqualTo(150);
+        UsuarioComprobanteIngresosEntity usuarioComprobante = new UsuarioComprobanteIngresosEntity();
+        usuarioComprobante.setIdUsuario(idUsuario);
+        usuarioComprobante.setIdComprobanteIngresos(1L);
+
+        ComprobanteIngresosEntity comprobanteIngresos = new ComprobanteIngresosEntity();
+        comprobanteIngresos.setId(1L);
+        comprobanteIngresos.setIngresoMensual(5000000);
+
+        UsuarioPrestamoEntity usuarioPrestamo = new UsuarioPrestamoEntity();
+        usuarioPrestamo.setIdUsuario(idUsuario);
+        usuarioPrestamo.setIdPrestamo(1L);
+
+        PrestamoEntity prestamo = new PrestamoEntity();
+        prestamo.setId(1L);
+        prestamo.setMonto(100000000);
+        prestamo.setPlazo(20);
+        prestamo.setTasaInteres(5.0);
+
+        when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuario));
+        when(usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)).thenReturn(Optional.of(usuarioComprobante));
+        when(comprobanteIngresosRepository.findById(1L)).thenReturn(Optional.of(comprobanteIngresos));
+        when(usuarioPrestamoRepository.findByIdUsuario(idUsuario)).thenReturn(Optional.of(usuarioPrestamo));
+        when(prestamoRepository.findById(1L)).thenReturn(Optional.of(prestamo));
+
+        // When
+        boolean resultado = bancoService.evaluarRelacionCuotaIngreso(idUsuario);
+
+        // Then
+        assertThat(resultado).isTrue();
     }
 
     @Test
-    void whenSalaryGreaterThanOrEqualTo2000_thenSalaryBonusIs20Percent() {
-        //Given
-        employee.setRut("9.698.542-2");
-        employee.setName("Maria");
-        employee.setChildren(1);
-        employee.setSalary(2500);
-        employee.setCategory("B");
+    void whenEvaluarHistorialCrediticio_thenReturnFalse() throws Exception {
+        // Given
+        Long idUsuario = 1L;
 
-        //When
-        int salaryBonus = officeHRM.getSalaryBonus(employee);
+        UsuarioComprobanteIngresosEntity usuarioComprobante = new UsuarioComprobanteIngresosEntity();
+        usuarioComprobante.setIdUsuario(idUsuario);
+        usuarioComprobante.setIdComprobanteIngresos(1L);
 
-        //Then
-        assertThat(salaryBonus).isEqualTo(500);
+        ComprobanteIngresosEntity comprobanteIngresos = new ComprobanteIngresosEntity();
+        comprobanteIngresos.setId(1L);
+        comprobanteIngresos.setCantidadDeudasPendientes(4); // Más de 3 deudas pendientes
+        comprobanteIngresos.setDeudas(2000000);
+        comprobanteIngresos.setIngresoMensual(5000000);
+
+        when(usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)).thenReturn(Optional.of(usuarioComprobante));
+        when(comprobanteIngresosRepository.findById(1L)).thenReturn(Optional.of(comprobanteIngresos));
+
+        // When
+        boolean resultado = bancoService.evaluarHistorialCrediticio(idUsuario);
+
+        // Then
+        assertThat(resultado).isFalse();
     }
 
     @Test
-    void whenChildrenLessThan3_thenChildrenBonusIs5PercentPerChild() {
-        //Given
-        employee.setRut("11.456.765-3");
-        employee.setName("Jorge");
-        employee.setChildren(2);
-        employee.setSalary(2000);
-        employee.setCategory("A");
+    void whenEvaluarAntiguedadEmpleado_thenReturnTrue() throws Exception {
+        // Given
+        Long idUsuario = 1L;
 
-        //When
-        int childrenBonus = officeHRM.getChildrenBonus(employee);
+        UsuarioEntity usuario = new UsuarioEntity();
+        usuario.setId(idUsuario);
+        usuario.setTipoEmpleado("Empleado");
 
-        //Then
-        assertThat(childrenBonus).isEqualTo(200);
+        UsuarioComprobanteIngresosEntity usuarioComprobante = new UsuarioComprobanteIngresosEntity();
+        usuarioComprobante.setIdUsuario(idUsuario);
+        usuarioComprobante.setIdComprobanteIngresos(1L);
+
+        ComprobanteIngresosEntity comprobanteIngresos = new ComprobanteIngresosEntity();
+        comprobanteIngresos.setId(1L);
+        comprobanteIngresos.setAntiguedadLaboral(2); // Más de 1 año
+
+        when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuario));
+        when(usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)).thenReturn(Optional.of(usuarioComprobante));
+        when(comprobanteIngresosRepository.findById(1L)).thenReturn(Optional.of(comprobanteIngresos));
+
+        // When
+        boolean resultado = bancoService.evaluarAntiguedad(idUsuario);
+
+        // Then
+        assertThat(resultado).isTrue();
     }
 
     @Test
-    void whenChildrenGreaterThanOrEqualTo3_thenChildrenBonusIs15Percent() {
-        //Given
-        employee.setRut("10.410.512-3");
-        employee.setName("Alfredo");
-        employee.setChildren(3);
-        employee.setSalary(2000);
-        employee.setCategory("B");
+    void whenEvaluarRelacionDeudaIngreso_thenReturnFalse() throws Exception {
+        // Given
+        Long idUsuario = 1L;
 
-        //When
-        int childrenBonus = officeHRM.getChildrenBonus(employee);
+        UsuarioEntity usuario = new UsuarioEntity();
+        usuario.setId(idUsuario);
 
-        //Then
-        assertThat(childrenBonus).isEqualTo(900);
+        UsuarioComprobanteIngresosEntity usuarioComprobante = new UsuarioComprobanteIngresosEntity();
+        usuarioComprobante.setIdUsuario(idUsuario);
+        usuarioComprobante.setIdComprobanteIngresos(1L);
+
+        ComprobanteIngresosEntity comprobanteIngresos = new ComprobanteIngresosEntity();
+        comprobanteIngresos.setId(1L);
+        comprobanteIngresos.setIngresoMensual(5000000);
+        comprobanteIngresos.setDeudas(2000000);
+
+        UsuarioPrestamoEntity usuarioPrestamo = new UsuarioPrestamoEntity();
+        usuarioPrestamo.setIdUsuario(idUsuario);
+        usuarioPrestamo.setIdPrestamo(1L);
+
+        PrestamoEntity prestamo = new PrestamoEntity();
+        prestamo.setId(1L);
+        prestamo.setMonto(100000000);
+        prestamo.setPlazo(30);
+        prestamo.setTasaInteres(5.0);
+
+        when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuario));
+        when(usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)).thenReturn(Optional.of(usuarioComprobante));
+        when(comprobanteIngresosRepository.findById(1L)).thenReturn(Optional.of(comprobanteIngresos));
+        when(usuarioPrestamoRepository.findByIdUsuario(idUsuario)).thenReturn(Optional.of(usuarioPrestamo));
+        when(prestamoRepository.findById(1L)).thenReturn(Optional.of(prestamo));
+
+        // When
+        boolean resultado = bancoService.evaluarRelacionDeudaIngreso(idUsuario);
+
+        // Then
+        assertThat(resultado).isFalse();
     }
 
     @Test
-    void whenCategoryA_thenExtraHoursBonusIs100PerHour() {
-        //Given
-        employee.setRut("12.654.872-3");
-        employee.setName("Andres");
-        employee.setChildren(2);
-        employee.setSalary(2000);
-        employee.setCategory("A");
+    void whenEvaluarEdad_thenReturnTrue() throws Exception {
+        // Given
+        Long idUsuario = 1L;
 
-        //When
-        int bonus = officeHRM.getExtraHoursBonus(employee, 3);
+        UsuarioEntity usuario = new UsuarioEntity();
+        usuario.setId(idUsuario);
+        usuario.setEdad(40);
 
-        //Then
-        assertThat(bonus).isEqualTo(300);
+        UsuarioPrestamoEntity usuarioPrestamo = new UsuarioPrestamoEntity();
+        usuarioPrestamo.setIdUsuario(idUsuario);
+        usuarioPrestamo.setIdPrestamo(1L);
+
+        PrestamoEntity prestamo = new PrestamoEntity();
+        prestamo.setId(1L);
+        prestamo.setPlazo(20);
+
+        when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuario));
+        when(usuarioPrestamoRepository.findByIdUsuario(idUsuario)).thenReturn(Optional.of(usuarioPrestamo));
+        when(prestamoRepository.findById(1L)).thenReturn(Optional.of(prestamo));
+
+        // When
+        boolean resultado = bancoService.evaluarEdad(idUsuario);
+
+        // Then
+        assertThat(resultado).isTrue();
     }
 
     @Test
-    void whenCategoryB_thenExtraHoursBonusIs60PerHour() {
-        //Given
-        employee.setRut("8.325.284-7");
-        employee.setName("Jorge");
-        employee.setChildren(1);
-        employee.setSalary(2500);
-        employee.setCategory("B");
+    void whenEvaluarCapacidadAhorro_thenReturnModerada() throws Exception {
+        // Given
+        Long idUsuario = 1L;
 
-        //When
-        int bonus = officeHRM.getExtraHoursBonus(employee, 2);
+        // Simular métodos internos que evaluarCapacidadAhorro utiliza
+        doReturn(true).when(bancoService).evaluarSaldoMinimo(idUsuario);
+        doReturn(true).when(bancoService).evaluarHistorialAhorroConsistente(idUsuario);
+        doReturn(false).when(bancoService).evaluarDepositosPeriodicos(idUsuario);
+        doReturn(true).when(bancoService).evaluarRelacionSaldoAntiguedad(idUsuario);
+        doReturn(false).when(bancoService).evaluarRetirosRecientes(idUsuario);
 
-        //Then
-        assertThat(bonus).isEqualTo(120);
+        // When
+        Map<String, Object> resultado = bancoService.evaluarCapacidadAhorro(idUsuario);
+
+        // Then
+        assertThat(resultado.get("capacidadAhorro")).isEqualTo("moderada");
+        assertThat(resultado.get("reglasCumplidas")).isEqualTo(3);
+        assertThat(resultado.get("detalles")).isInstanceOf(Map.class);
+        Map<String, Boolean> detalles = (Map<String, Boolean>) resultado.get("detalles");
+        assertThat(detalles).containsEntry("R71", true)
+                .containsEntry("R72", true)
+                .containsEntry("R73", false)
+                .containsEntry("R74", true)
+                .containsEntry("R75", false);
     }
 
+    /*
     @Test
-    void whenCategoryC_thenExtraHoursBonusIs20PerHour() {
-        //Given
-        employee.setRut("19.114.115-6");
-        employee.setName("Javiera");
-        employee.setChildren(0);
-        employee.setSalary(1800);
-        employee.setCategory("C");
+    void whenEvaluarCredito_thenAprobadoIsTrue() throws Exception {
+        // Given
+        Long idUsuario = 1L;
 
-        //When
-        int bonus = officeHRM.getExtraHoursBonus(employee, 5);
+        // Configuración de los mocks para las llamadas al repositorio
+        UsuarioEntity usuario = new UsuarioEntity();
+        usuario.setId(idUsuario);
+        usuario.setEdad(40);
+        usuario.setTipoEmpleado("Empleado");
 
-        //Then
-        assertThat(bonus).isEqualTo(100);
+        UsuarioPrestamoEntity usuarioPrestamo = new UsuarioPrestamoEntity();
+        usuarioPrestamo.setIdUsuario(idUsuario);
+        usuarioPrestamo.setIdPrestamo(1L);
+
+        PrestamoEntity prestamo = new PrestamoEntity();
+        prestamo.setId(1L);
+        prestamo.setMonto(100000000);
+        prestamo.setPlazo(20);
+        prestamo.setTasaInteres(5.0);
+        prestamo.setTipo("primera vivienda");
+        prestamo.setValorPropiedad(125000000); // Para R5: 80% de 125M = 100M
+
+        UsuarioComprobanteIngresosEntity usuarioComprobante = new UsuarioComprobanteIngresosEntity();
+        usuarioComprobante.setIdUsuario(idUsuario);
+        usuarioComprobante.setIdComprobanteIngresos(1L);
+
+        ComprobanteIngresosEntity comprobanteIngresos = new ComprobanteIngresosEntity();
+        comprobanteIngresos.setId(1L);
+        comprobanteIngresos.setIngresoMensual(5000000);
+        comprobanteIngresos.setCantidadDeudasPendientes(2);
+        comprobanteIngresos.setDeudas(1000000);
+        comprobanteIngresos.setSaldo(20000000);
+        comprobanteIngresos.setAntiguedadLaboral(5);
+        comprobanteIngresos.setIngresosUltimos24Meses("5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000,5000000");
+        comprobanteIngresos.setSaldosMensuales("20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000,20000000");
+        comprobanteIngresos.setDepositosUltimos12Meses("1000000,1000000,1000000,1000000,1000000,1000000,1000000,1000000,1000000,1000000,1000000,1000000");
+        comprobanteIngresos.setRetirosUltimos6Meses("500000,500000,500000,500000,500000,500000");
+        comprobanteIngresos.setAntiguedadCuenta(3);
+
+        when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuario));
+        when(usuarioPrestamoRepository.findByIdUsuario(idUsuario)).thenReturn(Optional.of(usuarioPrestamo));
+        when(prestamoRepository.findById(1L)).thenReturn(Optional.of(prestamo));
+        when(usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)).thenReturn(Optional.of(usuarioComprobante));
+        when(comprobanteIngresosRepository.findById(1L)).thenReturn(Optional.of(comprobanteIngresos));
+
+        // Simulación de los métodos evaluados internamente
+        doReturn(true).when(bancoService).evaluarRelacionCuotaIngreso(idUsuario);
+        doReturn(true).when(bancoService).evaluarHistorialCrediticio(idUsuario);
+        doReturn(true).when(bancoService).evaluarAntiguedad(idUsuario);
+        doReturn(true).when(bancoService).evaluarRelacionDeudaIngreso(idUsuario);
+        doReturn(true).when(bancoService).evaluarMontoMaximoFinanciamiento(idUsuario);
+        doReturn(true).when(bancoService).evaluarEdad(idUsuario);
+
+        // Simular evaluarCapacidadAhorro si es necesario
+        doReturn(true).when(bancoService).evaluarCapacidadAhorro(idUsuario);
+
+        // When
+        Map<String, Object> resultado = bancoService.evaluarCredito(idUsuario);
+
+        // Then
+        assertThat(resultado.get("aprobado")).isEqualTo(true);
+        assertThat(resultado.get("capacidadAhorro")).isEqualTo("sólida");
+        assertThat(resultado.get("detallesAhorro")).isInstanceOf(Map.class);
+
+        // Verificar que evaluarCapacidadAhorro fue llamado
+        verify(bancoService).evaluarCapacidadAhorro(idUsuario);
     }
-
+    */
 }

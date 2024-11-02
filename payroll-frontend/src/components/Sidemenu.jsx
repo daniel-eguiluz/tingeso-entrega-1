@@ -42,6 +42,13 @@ export default function Sidemenu({ open, toggleDrawer }) {
           <ListItemText primary="Empleados" />
         </ListItemButton>
 
+        <ListItemButton onClick={() => navigate("/usuario/listado")}>
+          <ListItemIcon>
+            <PeopleAltIcon />
+          </ListItemIcon>
+          <ListItemText primary="Usuarios" />
+        </ListItemButton>
+
         <ListItemButton onClick={() => navigate("/extraHours/list")}>
           <ListItemIcon>
             <MoreTimeIcon />
