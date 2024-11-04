@@ -1,0 +1,46 @@
+
+version: "3.8"
+services:
+  frontend:
+    container_name: payroll-frontend
+    image: danieleguiluz44/payroll-frontend
+    ports:
+      - "8070:80"
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  backend:
+    container_name: payroll-backend
+    image: danieleguiluz44/payroll-backend
+    ports:
+      - "8090:8090"
+    environment:
+      - DB_HOST=192.168.18.178
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+
+####
+#version: "3.8"
+#services:
+#  frontend:
+#    container_name: payroll-frontend
+#    image: mtisw/payroll-frontend:latest
+#    ports:
+#      - "8070:80"
+#    deploy:
+#      restart_policy:
+#        condition: on-failure
+#
+#  backend:
+#    container_name: payroll-backend
+#    image: mtisw/payroll-backend:latest
+#    ports:
+#      - "8090:8090"
+#    environment:
+#      - DB_HOST=192.168.56.1
+#    deploy:
+#      restart_policy:
+#        condition: on-failure

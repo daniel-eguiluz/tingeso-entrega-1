@@ -1,5 +1,6 @@
 import axios from "axios";
 
+/*
 const payrollBackendServer = "localhost"; // O el hostname correspondiente
 const payrollBackendPort = "8090"; // Según tu application.properties
 
@@ -12,9 +13,9 @@ export default axios.create({
         'Content-Type': 'application/json'
     }
 });
+*/
 
 
-/*
 const payrollBackendServer = import.meta.env.VITE_PAYROLL_BACKEND_SERVER;
 const payrollBackendPort = import.meta.env.VITE_PAYROLL_BACKEND_PORT;
 
@@ -27,4 +28,3 @@ export default axios.create({
         'Content-Type': 'application/json'
     }
 });
-*/
