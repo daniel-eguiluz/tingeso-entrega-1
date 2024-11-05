@@ -1,32 +1,26 @@
+version: "3.8"
+
 services:
-  # Postgres service
+  # Postgres services
   postgres:
-    image: postgres:latest
-    container_name: postgres-db-prestamos-banco
+    image: danieleguiluz44/payroll-postgres
     environment:
-      POSTGRES_DB: db-prestamos-banco
-      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
     networks:
       - backend-network
-
   # Frontend services
   frontend1:
-    image: danieleguiluz44/payroll-frontend:latest
+    image: danieleguiluz44/payroll-frontend
     networks:
       - frontend-network
 
   frontend2:
-    image: danieleguiluz44/payroll-frontend:latest
+    image: danieleguiluz44/payroll-frontend
     networks:
       - frontend-network
 
   frontend3:
-    image: danieleguiluz44/payroll-frontend:latest
+    image: danieleguiluz44/payroll-frontend
     networks:
       - frontend-network
 
@@ -34,38 +28,23 @@ services:
   backend1:
     image: danieleguiluz44/payroll-backend
     environment:
-      DB_HOST: postgres
-      DB_NAME: db-prestamos-banco
-      DB_USER: postgres
-      DB_PASS: password
+      - DB_HOST=192.168.1.88
     networks:
       - backend-network
-    depends_on:
-      - postgres
 
   backend2:
     image: danieleguiluz44/payroll-backend
     environment:
-      DB_HOST: postgres
-      DB_NAME: db-prestamos-banco
-      DB_USER: postgres
-      DB_PASS: password
+      - DB_HOST=192.168.1.88
     networks:
       - backend-network
-    depends_on:
-      - postgres
 
   backend3:
-    image: danieleguiluz44/payroll-backend
+    image: danieleguiluz44/payroll-backend:latest
     environment:
-      DB_HOST: postgres
-      DB_NAME: db-prestamos-banco
-      DB_USER: postgres
-      DB_PASS: password
+      - DB_HOST=192.168.1.88
     networks:
       - backend-network
-    depends_on:
-      - postgres
 
   # Nginx for frontend load balancing
   nginx-frontend:
@@ -85,7 +64,7 @@ services:
   nginx-backend:
     image: nginx:latest
     ports:
-      - "8090:80"
+      - "8090:8090"
     volumes:
       - ./nginx-backend.conf:/etc/nginx/nginx.conf
     depends_on:
@@ -98,6 +77,3 @@ services:
 networks:
   frontend-network:
   backend-network:
-
-volumes:
-  postgres-data:
