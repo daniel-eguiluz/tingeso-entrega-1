@@ -17,10 +17,10 @@ export default function SolicitarCredito() {
     saldo: "",
     deudas: "",
     cantidadDeudasPendientes: "",
+    antiguedadCuenta: "",
     ingresosUltimos24Meses: Array(24).fill(""),
     saldosMensuales: Array(12).fill(""),
     depositosUltimos12Meses: Array(12).fill(""),
-    antiguedadCuenta: "",
     retirosUltimos6Meses: Array(6).fill("")
   });
 
@@ -47,32 +47,39 @@ export default function SolicitarCredito() {
     setSuccess(null);
 
     try {
-      // Convertir los arrays de strings a arrays de números
-      const requestBody = {
-        ...formData,
-        ingresosUltimos24Meses: formData.ingresosUltimos24Meses.map((item) =>
-          Number(item.trim())
-        ),
-        saldosMensuales: formData.saldosMensuales.map((item) =>
-          Number(item.trim())
-        ),
-        depositosUltimos12Meses: formData.depositosUltimos12Meses.map((item) =>
-          Number(item.trim())
-        ),
-        retirosUltimos6Meses: formData.retirosUltimos6Meses.map((item) =>
-          Number(item.trim())
-        )
+      // Preparar el objeto de solicitud con la estructura plana
+      const solicitudCredito = {
+        tipo: formData.tipo,
+        plazo: Number(formData.plazo),
+        tasaInteres: Number(formData.tasaInteres),
+        monto: Number(formData.monto),
+        valorPropiedad: Number(formData.valorPropiedad),
+        antiguedadLaboral: Number(formData.antiguedadLaboral),
+        ingresoMensual: Number(formData.ingresoMensual),
+        saldo: Number(formData.saldo),
+        deudas: Number(formData.deudas),
+        cantidadDeudasPendientes: Number(formData.cantidadDeudasPendientes),
+        antiguedadCuenta: Number(formData.antiguedadCuenta),
+        ingresosUltimos24Meses: formData.ingresosUltimos24Meses.map(item => Number(item.trim())),
+        saldosMensuales: formData.saldosMensuales.map(item => Number(item.trim())),
+        depositosUltimos12Meses: formData.depositosUltimos12Meses.map(item => Number(item.trim())),
+        retirosUltimos6Meses: formData.retirosUltimos6Meses.map(item => Number(item.trim())),
       };
 
+      console.log("Solicitud de Crédito:", solicitudCredito); // Para depuración
+
       // Enviar la solicitud al backend
-      const response = await usuarioService.solicitarCredito(id, requestBody);
+      const response = await usuarioService.solicitarCredito(id, solicitudCredito);
       setSuccess("Crédito solicitado exitosamente.");
-      // Opcional: Navegar de vuelta a la lista de usuarios después de un retraso
-      setTimeout(() => navigate("/usuario/listado"), 2000);
+      
+      // Eliminar o comentar la redirección
+      // setTimeout(() => navigate("/usuarios/listado"), 2000);
     } catch (error) {
       console.error("Error al solicitar el crédito:", error);
       if (error.response) {
-        setError(`Error: ${error.response.status} - ${error.response.data}`);
+        // Log detallado del error del backend
+        console.error("Datos del Error:", error.response.data);
+        setError(`Error: ${error.response.status} - ${error.response.data.error || error.response.data}`);
       } else if (error.request) {
         setError("Error: No se recibió respuesta del servidor.");
       } else {
