@@ -1,141 +1,214 @@
 package edu.mtisw.payrollbackend.services;
 
-import edu.mtisw.payrollbackend.entities.EmployeeEntity;
+import edu.mtisw.payrollbackend.entities.PrestamoEntity;
+import edu.mtisw.payrollbackend.repositories.PrestamoRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.ArrayList;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class PrestamoServiceTest {
 
-    OfficeHRMService officeHRM = new OfficeHRMService();
-    EmployeeEntity employee = new EmployeeEntity();
+    @InjectMocks
+    PrestamoService prestamoService;
 
-    @Test
-    void whenGetAnnualSalary_thenCorrect() {
-        //Given
-        employee.setRut("12.345.678-2");
-        employee.setName("Raul");
-        employee.setChildren(2);
-        employee.setSalary(2000);
-        employee.setCategory("A");
+    @Mock
+    PrestamoRepository prestamoRepository;
 
-        //When
-        int annualSalary = officeHRM.getAnnualSalary(employee);
-
-        //Then
-        assertThat(annualSalary).isEqualTo(24000);
+    @BeforeEach
+    void setUp() {
+        // No es necesario inicializar los mocks manualmente con @ExtendWith
     }
 
     @Test
-    void whenSalaryLessThan2000_thenSalaryBonusIs10Percent() {
-        //Given
-        employee.setRut("13.777.678-2");
-        employee.setName("Felipe");
-        employee.setChildren(2);
-        employee.setSalary(1500);
-        employee.setCategory("A");
+    void whenGetPrestamos_thenReturnListOfPrestamos() {
+        // Given
+        ArrayList<PrestamoEntity> prestamos = new ArrayList<>();
+        PrestamoEntity prestamo1 = new PrestamoEntity(
+                1L, // id
+                "Primera vivienda", // tipo
+                30, // plazo
+                4.5, // tasaInteres
+                100000000, // monto
+                "Aprobado", // estado
+                120000000 // valorPropiedad
+        );
+        PrestamoEntity prestamo2 = new PrestamoEntity(
+                2L,
+                "Segunda vivienda",
+                20,
+                5.0,
+                70000000,
+                "En proceso",
+                85000000
+        );
+        PrestamoEntity prestamo3 = new PrestamoEntity(
+                3L,
+                "Propiedades comerciales",
+                25,
+                6.5,
+                80000000,
+                "Rechazado",
+                100000000
+        );
+        PrestamoEntity prestamo4 = new PrestamoEntity(
+                4L,
+                "Remodelacion",
+                15,
+                5.5,
+                50000000,
+                "Aprobado",
+                60000000
+        );
+        prestamos.add(prestamo1);
+        prestamos.add(prestamo2);
+        prestamos.add(prestamo3);
+        prestamos.add(prestamo4);
 
-        //When
-        int salaryBonus = officeHRM.getSalaryBonus(employee);
+        when(prestamoRepository.findAll()).thenReturn(prestamos);
 
-        //Then
-        assertThat(salaryBonus).isEqualTo(150);
+        // When
+        ArrayList<PrestamoEntity> resultado = prestamoService.getPrestamos();
+
+        // Then
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.size()).isEqualTo(4);
+        assertThat(resultado).contains(prestamo1, prestamo2, prestamo3, prestamo4);
+        verify(prestamoRepository, times(1)).findAll();
     }
 
     @Test
-    void whenSalaryGreaterThanOrEqualTo2000_thenSalaryBonusIs20Percent() {
-        //Given
-        employee.setRut("9.698.542-2");
-        employee.setName("Maria");
-        employee.setChildren(1);
-        employee.setSalary(2500);
-        employee.setCategory("B");
+    void whenGetPrestamoById_thenReturnPrestamo() {
+        // Given
+        Long id = 1L;
+        PrestamoEntity prestamo = new PrestamoEntity(
+                id,
+                "Primera vivienda",
+                30,
+                4.5,
+                100000000,
+                "Aprobado",
+                120000000
+        );
 
-        //When
-        int salaryBonus = officeHRM.getSalaryBonus(employee);
+        when(prestamoRepository.findById(id)).thenReturn(Optional.of(prestamo));
 
-        //Then
-        assertThat(salaryBonus).isEqualTo(500);
+        // When
+        PrestamoEntity resultado = prestamoService.getPrestamoById(id);
+
+        // Then
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo(id);
+        assertThat(resultado.getTipo()).isEqualTo("Primera vivienda");
+        assertThat(resultado.getPlazo()).isEqualTo(30);
+        assertThat(resultado.getTasaInteres()).isEqualTo(4.5);
+        assertThat(resultado.getMonto()).isEqualTo(100000000);
+        assertThat(resultado.getEstado()).isEqualTo("Aprobado");
+        assertThat(resultado.getValorPropiedad()).isEqualTo(120000000);
+        verify(prestamoRepository, times(1)).findById(id);
     }
 
     @Test
-    void whenChildrenLessThan3_thenChildrenBonusIs5PercentPerChild() {
-        //Given
-        employee.setRut("11.456.765-3");
-        employee.setName("Jorge");
-        employee.setChildren(2);
-        employee.setSalary(2000);
-        employee.setCategory("A");
+    void whenSavePrestamo_thenReturnSavedPrestamo() {
+        // Given
+        PrestamoEntity prestamo = new PrestamoEntity(
+                null,
+                "Propiedades comerciales",
+                25,
+                6.5,
+                80000000,
+                "Rechazado",
+                100000000
+        );
+        PrestamoEntity prestamoGuardado = new PrestamoEntity(
+                3L,
+                "Propiedades comerciales",
+                25,
+                6.5,
+                80000000,
+                "Rechazado",
+                100000000
+        );
 
-        //When
-        int childrenBonus = officeHRM.getChildrenBonus(employee);
+        when(prestamoRepository.save(prestamo)).thenReturn(prestamoGuardado);
 
-        //Then
-        assertThat(childrenBonus).isEqualTo(200);
+        // When
+        PrestamoEntity resultado = prestamoService.savePrestamo(prestamo);
+
+        // Then
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo(3L);
+        assertThat(resultado.getTipo()).isEqualTo("Propiedades comerciales");
+        assertThat(resultado.getPlazo()).isEqualTo(25);
+        assertThat(resultado.getTasaInteres()).isEqualTo(6.5);
+        assertThat(resultado.getMonto()).isEqualTo(80000000);
+        assertThat(resultado.getEstado()).isEqualTo("Rechazado");
+        assertThat(resultado.getValorPropiedad()).isEqualTo(100000000);
+        verify(prestamoRepository, times(1)).save(prestamo);
     }
 
     @Test
-    void whenChildrenGreaterThanOrEqualTo3_thenChildrenBonusIs15Percent() {
-        //Given
-        employee.setRut("10.410.512-3");
-        employee.setName("Alfredo");
-        employee.setChildren(3);
-        employee.setSalary(2000);
-        employee.setCategory("B");
+    void whenUpdatePrestamo_thenReturnUpdatedPrestamo() {
+        // Given
+        Long id = 1L;
+        PrestamoEntity prestamoActualizado = new PrestamoEntity(
+                id,
+                "Primera vivienda",
+                35, // Cambio en el plazo
+                4.5,
+                100000000,
+                "Aprobado",
+                120000000
+        );
 
-        //When
-        int childrenBonus = officeHRM.getChildrenBonus(employee);
+        when(prestamoRepository.save(prestamoActualizado)).thenReturn(prestamoActualizado);
 
-        //Then
-        assertThat(childrenBonus).isEqualTo(900);
+        // When
+        PrestamoEntity resultado = prestamoService.updatePrestamo(prestamoActualizado);
+
+        // Then
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo(id);
+        assertThat(resultado.getPlazo()).isEqualTo(35); // Verificar el cambio
+        verify(prestamoRepository, times(1)).save(prestamoActualizado);
+    }
+
+
+    @Test
+    void whenDeletePrestamo_thenReturnTrue() throws Exception {
+        // Given
+        Long id = 1L;
+        doNothing().when(prestamoRepository).deleteById(id);
+
+        // When
+        boolean resultado = prestamoService.deletePrestamo(id);
+
+        // Then
+        assertThat(resultado).isTrue();
+        verify(prestamoRepository, times(1)).deleteById(id);
     }
 
     @Test
-    void whenCategoryA_thenExtraHoursBonusIs100PerHour() {
-        //Given
-        employee.setRut("12.654.872-3");
-        employee.setName("Andres");
-        employee.setChildren(2);
-        employee.setSalary(2000);
-        employee.setCategory("A");
+    void whenDeletePrestamoWithException_thenThrowException() {
+        // Given
+        Long id = 1L;
+        doThrow(new RuntimeException("Error al eliminar")).when(prestamoRepository).deleteById(id);
 
-        //When
-        int bonus = officeHRM.getExtraHoursBonus(employee, 3);
-
-        //Then
-        assertThat(bonus).isEqualTo(300);
+        // When / Then
+        try {
+            prestamoService.deletePrestamo(id);
+        } catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo("Error al eliminar");
+        }
+        verify(prestamoRepository, times(1)).deleteById(id);
     }
-
-    @Test
-    void whenCategoryB_thenExtraHoursBonusIs60PerHour() {
-        //Given
-        employee.setRut("8.325.284-7");
-        employee.setName("Jorge");
-        employee.setChildren(1);
-        employee.setSalary(2500);
-        employee.setCategory("B");
-
-        //When
-        int bonus = officeHRM.getExtraHoursBonus(employee, 2);
-
-        //Then
-        assertThat(bonus).isEqualTo(120);
-    }
-
-    @Test
-    void whenCategoryC_thenExtraHoursBonusIs20PerHour() {
-        //Given
-        employee.setRut("19.114.115-6");
-        employee.setName("Javiera");
-        employee.setChildren(0);
-        employee.setSalary(1800);
-        employee.setCategory("C");
-
-        //When
-        int bonus = officeHRM.getExtraHoursBonus(employee, 5);
-
-        //Then
-        assertThat(bonus).isEqualTo(100);
-    }
-
 }

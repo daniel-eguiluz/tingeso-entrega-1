@@ -1,141 +1,164 @@
 package edu.mtisw.payrollbackend.services;
 
-import edu.mtisw.payrollbackend.entities.EmployeeEntity;
+import edu.mtisw.payrollbackend.entities.UsuarioComprobanteIngresosEntity;
+import edu.mtisw.payrollbackend.repositories.UsuarioComprobanteIngresosRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.ArrayList;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class UsuarioComprobanteIngresosServiceTest {
 
-    OfficeHRMService officeHRM = new OfficeHRMService();
-    EmployeeEntity employee = new EmployeeEntity();
+    @InjectMocks
+    UsuarioComprobanteIngresosService usuarioComprobanteIngresosService;
 
-    @Test
-    void whenGetAnnualSalary_thenCorrect() {
-        //Given
-        employee.setRut("12.345.678-2");
-        employee.setName("Raul");
-        employee.setChildren(2);
-        employee.setSalary(2000);
-        employee.setCategory("A");
+    @Mock
+    UsuarioComprobanteIngresosRepository usuarioComprobanteIngresosRepository;
 
-        //When
-        int annualSalary = officeHRM.getAnnualSalary(employee);
-
-        //Then
-        assertThat(annualSalary).isEqualTo(24000);
+    @BeforeEach
+    void setUp() {
+        // No es necesario inicializar los mocks manualmente con @ExtendWith
     }
 
     @Test
-    void whenSalaryLessThan2000_thenSalaryBonusIs10Percent() {
-        //Given
-        employee.setRut("13.777.678-2");
-        employee.setName("Felipe");
-        employee.setChildren(2);
-        employee.setSalary(1500);
-        employee.setCategory("A");
+    void whenGetUsuariosComprobanteIngresos_thenReturnListOfUsuariosComprobanteIngresos() {
+        // Given
+        ArrayList<UsuarioComprobanteIngresosEntity> usuariosComprobante = new ArrayList<>();
+        UsuarioComprobanteIngresosEntity usuario1 = new UsuarioComprobanteIngresosEntity(
+                1L, // id
+                1L, // idUsuario
+                1L  // idComprobanteIngresos
+        );
+        UsuarioComprobanteIngresosEntity usuario2 = new UsuarioComprobanteIngresosEntity(
+                2L,
+                2L,
+                2L
+        );
+        usuariosComprobante.add(usuario1);
+        usuariosComprobante.add(usuario2);
 
-        //When
-        int salaryBonus = officeHRM.getSalaryBonus(employee);
+        when(usuarioComprobanteIngresosRepository.findAll()).thenReturn(usuariosComprobante);
 
-        //Then
-        assertThat(salaryBonus).isEqualTo(150);
+        // When
+        ArrayList<UsuarioComprobanteIngresosEntity> resultado = usuarioComprobanteIngresosService.getUsuariosComprobanteIngresos();
+
+        // Then
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.size()).isEqualTo(2);
+        assertThat(resultado).contains(usuario1, usuario2);
+        verify(usuarioComprobanteIngresosRepository, times(1)).findAll();
     }
 
     @Test
-    void whenSalaryGreaterThanOrEqualTo2000_thenSalaryBonusIs20Percent() {
-        //Given
-        employee.setRut("9.698.542-2");
-        employee.setName("Maria");
-        employee.setChildren(1);
-        employee.setSalary(2500);
-        employee.setCategory("B");
+    void whenGetUsuarioComprobanteIngresosById_thenReturnUsuarioComprobanteIngresos() {
+        // Given
+        Long id = 1L;
+        UsuarioComprobanteIngresosEntity usuarioComprobante = new UsuarioComprobanteIngresosEntity(
+                id,
+                1L,
+                1L
+        );
 
-        //When
-        int salaryBonus = officeHRM.getSalaryBonus(employee);
+        when(usuarioComprobanteIngresosRepository.findById(id)).thenReturn(Optional.of(usuarioComprobante));
 
-        //Then
-        assertThat(salaryBonus).isEqualTo(500);
+        // When
+        UsuarioComprobanteIngresosEntity resultado = usuarioComprobanteIngresosService.getUsuarioComprobanteIngresosById(id);
+
+        // Then
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo(id);
+        assertThat(resultado.getIdUsuario()).isEqualTo(1L);
+        assertThat(resultado.getIdComprobanteIngresos()).isEqualTo(1L);
+        verify(usuarioComprobanteIngresosRepository, times(1)).findById(id);
     }
 
     @Test
-    void whenChildrenLessThan3_thenChildrenBonusIs5PercentPerChild() {
-        //Given
-        employee.setRut("11.456.765-3");
-        employee.setName("Jorge");
-        employee.setChildren(2);
-        employee.setSalary(2000);
-        employee.setCategory("A");
+    void whenSaveUsuarioComprobanteIngresos_thenReturnSavedUsuarioComprobanteIngresos() {
+        // Given
+        UsuarioComprobanteIngresosEntity usuarioComprobante = new UsuarioComprobanteIngresosEntity(
+                null,
+                3L,
+                3L
+        );
+        UsuarioComprobanteIngresosEntity usuarioComprobanteGuardado = new UsuarioComprobanteIngresosEntity(
+                3L,
+                3L,
+                3L
+        );
 
-        //When
-        int childrenBonus = officeHRM.getChildrenBonus(employee);
+        when(usuarioComprobanteIngresosRepository.save(usuarioComprobante)).thenReturn(usuarioComprobanteGuardado);
 
-        //Then
-        assertThat(childrenBonus).isEqualTo(200);
+        // When
+        UsuarioComprobanteIngresosEntity resultado = usuarioComprobanteIngresosService.saveUsuarioComprobanteIngresos(usuarioComprobante);
+
+        // Then
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo(3L);
+        assertThat(resultado.getIdUsuario()).isEqualTo(3L);
+        assertThat(resultado.getIdComprobanteIngresos()).isEqualTo(3L);
+        verify(usuarioComprobanteIngresosRepository, times(1)).save(usuarioComprobante);
     }
 
     @Test
-    void whenChildrenGreaterThanOrEqualTo3_thenChildrenBonusIs15Percent() {
-        //Given
-        employee.setRut("10.410.512-3");
-        employee.setName("Alfredo");
-        employee.setChildren(3);
-        employee.setSalary(2000);
-        employee.setCategory("B");
+    void whenUpdateUsuarioComprobanteIngresos_thenReturnUpdatedUsuarioComprobanteIngresos() {
+        // Given
+        Long id = 1L;
+        UsuarioComprobanteIngresosEntity usuarioComprobanteActualizado = new UsuarioComprobanteIngresosEntity(
+                id,
+                1L,
+                2L // Cambio en idComprobanteIngresos
+        );
 
-        //When
-        int childrenBonus = officeHRM.getChildrenBonus(employee);
+        when(usuarioComprobanteIngresosRepository.save(usuarioComprobanteActualizado)).thenReturn(usuarioComprobanteActualizado);
 
-        //Then
-        assertThat(childrenBonus).isEqualTo(900);
+        // When
+        UsuarioComprobanteIngresosEntity resultado = usuarioComprobanteIngresosService.updateUsuarioComprobanteIngresos(usuarioComprobanteActualizado);
+
+        // Then
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo(id);
+        assertThat(resultado.getIdUsuario()).isEqualTo(1L);
+        assertThat(resultado.getIdComprobanteIngresos()).isEqualTo(2L);
+        verify(usuarioComprobanteIngresosRepository, times(1)).save(usuarioComprobanteActualizado);
+    }
+
+
+
+    @Test
+    void whenDeleteUsuarioComprobanteIngresos_thenReturnTrue() throws Exception {
+        // Given
+        Long id = 1L;
+        doNothing().when(usuarioComprobanteIngresosRepository).deleteById(id);
+
+        // When
+        boolean resultado = usuarioComprobanteIngresosService.deleteUsuarioComprobanteIngresos(id);
+
+        // Then
+        assertThat(resultado).isTrue();
+        verify(usuarioComprobanteIngresosRepository, times(1)).deleteById(id);
     }
 
     @Test
-    void whenCategoryA_thenExtraHoursBonusIs100PerHour() {
-        //Given
-        employee.setRut("12.654.872-3");
-        employee.setName("Andres");
-        employee.setChildren(2);
-        employee.setSalary(2000);
-        employee.setCategory("A");
+    void whenDeleteUsuarioComprobanteIngresosWithException_thenThrowException() {
+        // Given
+        Long id = 1L;
+        doThrow(new RuntimeException("Error al eliminar")).when(usuarioComprobanteIngresosRepository).deleteById(id);
 
-        //When
-        int bonus = officeHRM.getExtraHoursBonus(employee, 3);
-
-        //Then
-        assertThat(bonus).isEqualTo(300);
+        // When / Then
+        try {
+            usuarioComprobanteIngresosService.deleteUsuarioComprobanteIngresos(id);
+        } catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo("Error al eliminar");
+        }
+        verify(usuarioComprobanteIngresosRepository, times(1)).deleteById(id);
     }
-
-    @Test
-    void whenCategoryB_thenExtraHoursBonusIs60PerHour() {
-        //Given
-        employee.setRut("8.325.284-7");
-        employee.setName("Jorge");
-        employee.setChildren(1);
-        employee.setSalary(2500);
-        employee.setCategory("B");
-
-        //When
-        int bonus = officeHRM.getExtraHoursBonus(employee, 2);
-
-        //Then
-        assertThat(bonus).isEqualTo(120);
-    }
-
-    @Test
-    void whenCategoryC_thenExtraHoursBonusIs20PerHour() {
-        //Given
-        employee.setRut("19.114.115-6");
-        employee.setName("Javiera");
-        employee.setChildren(0);
-        employee.setSalary(1800);
-        employee.setCategory("C");
-
-        //When
-        int bonus = officeHRM.getExtraHoursBonus(employee, 5);
-
-        //Then
-        assertThat(bonus).isEqualTo(100);
-    }
-
 }

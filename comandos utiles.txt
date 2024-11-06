@@ -1,0 +1,4 @@
+ssh hktr@104.41.54.253
+
+java -jar jenkins.war
+
