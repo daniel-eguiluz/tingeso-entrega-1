@@ -55,7 +55,7 @@ export default function ListadoUsuarios() {
 
   return (
     <div className="container">
-      <h1>Lista de clientes</h1>
+      <h1>Listado de solicitudes(chile)</h1>
 
       {/* Botón para Agregar Usuario */}
       <div className="mb-3 d-flex justify-content-start">
