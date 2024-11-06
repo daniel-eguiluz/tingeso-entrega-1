@@ -18,7 +18,7 @@ pipeline {
                 dir("payroll-frontend") {
                     script {
                         withDockerRegistry(credentialsId: 'docker-credentials') {
-                            bat "build -t danieleguiluz44/payroll-frontend --no-cache ."
+                            bat "docker build -t danieleguiluz44/payroll-frontend --no-cache ."
                             bat "docker push danieleguiluz44/payroll-frontend"
                         }
                     }
