@@ -19,7 +19,7 @@ export default function Navbar() {
             component="div"
             sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}
           >
-            PrestaBanco 
+            PRESTA BANCO 
           </Typography>
           
           {/* Botón de Home */}
