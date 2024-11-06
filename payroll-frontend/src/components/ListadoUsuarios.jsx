@@ -55,7 +55,7 @@ export default function ListadoUsuarios() {
 
   return (
     <div className="container">
-      <h1>Lista de Clientes</h1>
+      <h1>Lista de clientes</h1>
 
       {/* Botón para Agregar Usuario */}
       <div className="mb-3 d-flex justify-content-start">
@@ -122,9 +122,6 @@ export default function ListadoUsuarios() {
                   >
                     Calcular Costo Total
                   </button>
-                  <Link to={`/usuarios/${usuario.id}`} className="btn btn-secondary btn-sm">
-                    Ver
-                  </Link>
                 </td>
               </tr>
             ))

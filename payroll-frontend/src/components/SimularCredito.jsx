@@ -60,10 +60,6 @@ export default function SimularCredito() {
           </ul>
         </div>
       )}
-
-      <button className="btn btn-secondary mt-4" onClick={handleVolver}>
-        Volver a la Lista de Usuarios
-      </button>
     </div>
   );
 }

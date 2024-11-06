@@ -98,9 +98,6 @@ export default function CalcularCostoTotal() {
               </tr>
             </tbody>
           </table>
-          <button className="btn btn-secondary mt-3" onClick={handleVolver}>
-            Volver a la Lista de Usuarios
-          </button>
         </div>
       )}
     </div>

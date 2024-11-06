@@ -23,12 +23,7 @@ export default function Navbar() {
           </Typography>
           
           {/* Botón de Home */}
-          <Button
-            color="inherit"
-            component={Link}
-            to="/home"
-            sx={{ textTransform: 'none', fontSize: '1rem' }}
-          >
+          <Button color="inherit" component={Link} to="/">
             Home
           </Button>
         </Toolbar>

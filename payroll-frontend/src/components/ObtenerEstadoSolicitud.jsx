@@ -52,16 +52,9 @@ export default function ObtenerEstadoSolicitud() {
           <h3>Detalles del Estado de la Solicitud</h3>
           <ul className="list-group">
             <li className="list-group-item"><strong>Estado:</strong> {estadoSolicitud.estado}</li>
-            <li className="list-group-item"><strong>Fecha de Solicitud:</strong> {new Date(estadoSolicitud.fechaSolicitud).toLocaleDateString()}</li>
-            <li className="list-group-item"><strong>Fecha de Resolución:</strong> {estadoSolicitud.fechaResolucion ? new Date(estadoSolicitud.fechaResolucion).toLocaleDateString() : "Pendiente"}</li>
-            <li className="list-group-item"><strong>Detalles:</strong> {estadoSolicitud.detalles}</li>
           </ul>
         </div>
       )}
-
-      <button className="btn btn-secondary mt-4" onClick={handleVolver}>
-        Volver a la Lista de Usuarios
-      </button>
     </div>
   );
 }

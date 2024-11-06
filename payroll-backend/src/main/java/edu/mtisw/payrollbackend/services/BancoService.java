@@ -325,7 +325,7 @@ public class BancoService {
         return true;
     }
 
-        // Evaluar Depósitos Periódicos (R73)
+    // Evaluar Depósitos Periódicos (R73)
     public boolean evaluarDepositosPeriodicos(Long idUsuario) throws Exception {
         // Obtener el comprobante de ingresos asociado al usuario
         UsuarioComprobanteIngresosEntity usuarioComprobanteIngresos = usuarioComprobanteIngresosRepository.findByIdUsuario(idUsuario)
@@ -538,32 +538,32 @@ public class BancoService {
 
         // Evaluar R1: Relación Cuota/Ingreso
         boolean r1 = evaluarRelacionCuotaIngreso(idUsuario);
-        reglasCumplidas.put("R1", r1);
+        reglasCumplidas.put("Relación Cuota/Ingreso Aprobada", r1);
         if (!r1) aprobado = false;
 
         // Evaluar R2: Historial Crediticio del Cliente
         boolean r2 = evaluarHistorialCrediticio(idUsuario);
-        reglasCumplidas.put("R2", r2);
+        reglasCumplidas.put("Historial Crediticio del Cliente Aprobado", r2);
         if (!r2) aprobado = false;
 
         // Evaluar R3: Antigüedad Laboral y Estabilidad
         boolean r3 = evaluarAntiguedad(idUsuario);
-        reglasCumplidas.put("R3", r3);
+        reglasCumplidas.put("Antigüedad Laboral y Estabilidad Aprobada", r3);
         if (!r3) aprobado = false;
 
         // Evaluar R4: Relación Deuda/Ingreso
         boolean r4 = evaluarRelacionDeudaIngreso(idUsuario);
-        reglasCumplidas.put("R4", r4);
+        reglasCumplidas.put("Relación Deuda/Ingreso Aprobada", r4);
         if (!r4) aprobado = false;
 
         // Evaluar R5: Monto Máximo de Financiamiento
         boolean r5 = evaluarMontoMaximoFinanciamiento(idUsuario);
-        reglasCumplidas.put("R5", r5);
+        reglasCumplidas.put("Monto Máximo de Financiamiento Aprobado", r5);
         if (!r5) aprobado = false;
 
         // Evaluar R6: Edad del Solicitante
         boolean r6 = evaluarEdad(idUsuario);
-        reglasCumplidas.put("R6", r6);
+        reglasCumplidas.put("Edad del Solicitante Aprobada", r6);
         if (!r6) aprobado = false;
 
         // Evaluar R7: Capacidad de Ahorro
@@ -577,8 +577,9 @@ public class BancoService {
         }
 
         // Agregar los resultados al mapa de reglas cumplidas
-        reglasCumplidas.put("R7_CapacidadAhorro", !"insuficiente".equals(capacidadAhorro));
+        reglasCumplidas.put("Capacidad de Ahorro Aprobada", !"insuficiente".equals(capacidadAhorro));
 
+        // Agregar toda la información al resultado
         resultado.put("aprobado", aprobado);
         resultado.put("reglasCumplidas", reglasCumplidas);
         resultado.put("capacidadAhorro", capacidadAhorro);
